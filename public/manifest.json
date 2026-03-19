@@ -1,0 +1,21 @@
+{
+  "name": "AuraBeat Music",
+  "short_name": "AuraBeat",
+  "description": "Your premium personal music hub with neon space vibes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05050f",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -37,6 +37,21 @@ const formatSong = (song) => {
   };
 };
 
+const formatPlaylist = (playlist) => {
+  if (!playlist) return null;
+
+  const image =
+    playlist.image?.find(i => i.quality === '500x500')?.link ||
+    playlist.image?.[playlist.image.length - 1]?.link;
+
+  return {
+    id: playlist.id,
+    name: decodeHtml(playlist.title),
+    subtitle: decodeHtml(playlist.subtitle),
+    image,
+  };
+};
+
 // Filter results by language client-side when needed
 const filterByLang = (songs, lang) => {
   if (!lang || lang === 'all') return songs;
@@ -44,11 +59,24 @@ const filterByLang = (songs, lang) => {
 };
 
 export const saavnApi = {
+  searchPlaylists: async (query, lang = 'tamil') => {
+    try {
+      const searchQuery = lang && lang !== 'all' ? `${query} ${lang}` : query;
+      const res = await fetch(`${API_BASE}/search/playlists?query=${encodeURIComponent(searchQuery)}&limit=20`);
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      return (data.data?.results || []).map(formatPlaylist).filter(Boolean);
+    } catch (err) {
+      console.error('Search playlists error:', err);
+      return [];
+    }
+  },
+
   // Search — language param causes 400, so we filter client-side instead
   search: async (query, lang = 'tamil') => {
     try {
       const searchQuery = lang && lang !== 'all' ? `${query} ${lang}` : query;
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(searchQuery)}&limit=30`);
+      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(searchQuery)}&limit=50`);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
       const songs = (data.data?.results || []).map(formatSong).filter(Boolean);
@@ -63,7 +91,7 @@ export const saavnApi = {
 
   getTrending: async (lang = 'tamil') => {
     try {
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(`trending ${lang} 2024 2025`)}`);
+      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(`trending ${lang} 2024 2025`)}&limit=50`);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
       const songs = (data.data?.results || []).map(formatSong).filter(Boolean);
@@ -77,7 +105,7 @@ export const saavnApi = {
 
   getNewReleases: async (lang = 'tamil') => {
     try {
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(`new hits ${lang} 2025`)}`);
+      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(`new hits ${lang} 2025`)}&limit=50`);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
       const songs = (data.data?.results || []).map(formatSong).filter(Boolean);
@@ -106,7 +134,7 @@ export const saavnApi = {
 
   getArtistDetails: async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/artists?id=${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/artists?id=${encodeURIComponent(id)}&limit=50`);
       if (!res.ok) return null;
       const data = await res.json();
       return {
@@ -122,7 +150,7 @@ export const saavnApi = {
 
   getAlbumDetails: async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/albums?id=${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/albums?id=${encodeURIComponent(id)}&limit=50`);
       if (!res.ok) return null;
       const data = await res.json();
       return {
@@ -132,6 +160,31 @@ export const saavnApi = {
     } catch (err) {
       console.error('Album details error:', err);
       return null;
+    }
+  },
+
+  getPlaylistDetails: async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/playlists?id=${encodeURIComponent(id)}&limit=50`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return {
+        ...data.data,
+        songs: (data.data.songs || []).map(formatSong).filter(Boolean)
+      };
+    } catch (err) {
+      console.error('Playlist details error:', err);
+      return null;
+    }
+  },
+
+  getAlbums: async (albumIds) => {
+    try {
+      const albums = await Promise.all(albumIds.map(id => saavnApi.getAlbumDetails(id)));
+      return albums.filter(Boolean);
+    } catch (err) {
+      console.error('Albums error:', err);
+      return [];
     }
   },
 };

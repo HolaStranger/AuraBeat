@@ -7,7 +7,7 @@ import { SongCard } from '../components/SongCard';
 export const PlaylistDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playlists, deletePlaylist, setQueue } = usePlayerStore();
+  const { playlists, deletePlaylist } = usePlayerStore();
   
   const playlist = playlists.find(p => p.id === id);
 
@@ -23,9 +23,11 @@ export const PlaylistDetail = () => {
 
   const playAll = () => {
     if (playlist.songs.length === 0) return;
-    setQueue(playlist.songs);
-    usePlayerStore.getState().setCurrentIndex(0);
-    usePlayerStore.getState().setIsPlaying(true);
+    usePlayerStore.setState({
+      queue: playlist.songs,
+      currentIndex: 0,
+      isPlaying: true
+    });
   };
 
   const handleDelete = () => {
@@ -87,9 +89,11 @@ export const PlaylistDetail = () => {
                 key={`${song.id}-${i}`} 
                 song={song} 
                 onClick={() => {
-                  setQueue(playlist.songs);
-                  usePlayerStore.getState().setCurrentIndex(i);
-                  usePlayerStore.getState().setIsPlaying(true);
+                  usePlayerStore.setState({
+                    queue: playlist.songs,
+                    currentIndex: i,
+                    isPlaying: true
+                  });
                 }} 
               />
             ))}

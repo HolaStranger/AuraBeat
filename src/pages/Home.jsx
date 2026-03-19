@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Heart, MoreVertical, ListMusic, Plus } from 'lucide-react';
+import { Play, Heart, MoreVertical, ListMusic, Plus, Disc } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import clsx from 'clsx';
 import { saavnApi } from '../api/jiosaavn';
 import { SongCard } from '../components/SongCard';
+import { Grid } from '../components/Grid';
+import { SongCardSkeleton } from '../components/skeletons/SongCardSkeleton';
+import { GridItemSkeleton } from '../components/skeletons/GridItemSkeleton';
 import { usePlayerStore } from '../store/playerStore';
 
 const formatTime = (s) => {
@@ -32,7 +36,7 @@ const SongRow = ({ song, index, onPlay }) => {
         <div className="min-w-0">
           <p className="text-sm font-medium text-white truncate">{song.title}</p>
           {song.artistId ? (
-            <Link 
+            <Link
               to={`/artist/${song.artistId}`}
               onClick={(e) => e.stopPropagation()}
               className="text-xs text-white/35 truncate hover:text-neon-purple hover:underline transition-colors block"
@@ -65,12 +69,12 @@ const SongRow = ({ song, index, onPlay }) => {
           </button>
 
           {showMenu && (
-            <div 
+            <div
               className="absolute bottom-full right-0 mb-2 w-48 glass rounded-xl py-2 shadow-neon-purple z-[70] animate-in fade-in slide-in-from-bottom-1"
               onMouseLeave={() => setShowMenu(false)}
             >
               <p className="px-4 py-1 text-[10px] font-bold text-white/25 uppercase tracking-widest border-b border-white/5 mb-1">Add to Playlist</p>
-              
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -120,12 +124,21 @@ export const Home = () => {
   const { language, setQueue } = usePlayerStore();
   const [trending, setTrending] = useState([]);
   const [newReleases, setNewReleases] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([saavnApi.getTrending(language), saavnApi.getNewReleases(language)])
-      .then(([t, n]) => { setTrending(t.slice(0, 10)); setNewReleases(n.slice(0, 10)); })
+    Promise.all([
+      saavnApi.getTrending(language),
+      saavnApi.getNewReleases(language),
+      saavnApi.searchPlaylists(`top ${language}`),
+    ])
+      .then(([t, n, p]) => {
+        setTrending(t.slice(0, 10));
+        setNewReleases(n.slice(0, 10));
+        setPlaylists(p.slice(0, 5));
+      })
       .finally(() => setLoading(false));
   }, [language]);
 
@@ -153,17 +166,37 @@ export const Home = () => {
 
       <div className="px-8 space-y-10">
         {loading ? (
-          <div className="flex items-center justify-center py-32 gap-4">
-            <div className="w-2 h-2 rounded-full bg-neon-rock animate-pulse" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 rounded-full bg-neon-rock animate-pulse" style={{ animationDelay: '200ms' }} />
-            <div className="w-2 h-2 rounded-full bg-neon-rock animate-pulse" style={{ animationDelay: '400ms' }} />
-          </div>
+          <>
+            <section>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-1 h-6 bg-gray-700 rounded-full animate-pulse" />
+                <div className="h-6 w-40 rounded bg-gray-700 animate-pulse"></div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <SongCardSkeleton key={i} />
+                ))}
+              </div>
+            </section>
+            <section>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-1 h-6 bg-gray-700 rounded-full animate-pulse" />
+                <div className="h-6 w-40 rounded bg-gray-700 animate-pulse"></div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <GridItemSkeleton key={i} />
+                ))}
+              </div>
+            </section>
+          </>
         ) : (
           <>
             {/* Fresh Drops – Song Cards */}
             <section>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-1 h-6 bg-neon-rock rounded-full" />
+.
                 <h2 className="text-base font-black text-white uppercase tracking-[0.25em]">Fresh Drops</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -172,6 +205,8 @@ export const Home = () => {
                 ))}
               </div>
             </section>
+
+            <Grid title="Top Playlists" items={playlists} type="playlist" />
 
             {/* Top Charts – Vertical List */}
             <section>

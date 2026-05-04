@@ -255,7 +255,11 @@ export const PlayerDetailPanel = () => {
                       <img src={s.image} className="w-10 h-10 rounded-lg object-cover" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-white truncate group-hover:text-neon-rock transition-colors">{s.title}</p>
-                        <p className="text-[10px] text-white/30 truncate uppercase tracking-wider">{s.artist}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-[10px] text-white/30 truncate uppercase tracking-wider">{s.artist}</p>
+                          <span className="w-1 h-1 rounded-full bg-white/10" />
+                          <p className="text-[10px] text-white/20 truncate italic">{s.album}</p>
+                        </div>
                       </div>
                       <Plus size={14} className="text-white/20 group-hover:text-white" />
                     </button>
@@ -277,7 +281,7 @@ export const PlayerDetailPanel = () => {
               <span>{formatTime(duration)}</span>
             </div>
             <div
-              className="w-full h-1 bg-white/5 rounded-full cursor-pointer relative group hover:h-1.5 transition-all"
+              className="w-full h-1 bg-white/15 rounded-full cursor-pointer relative group hover:h-1.5 transition-all"
               onClick={handleSeek}
             >
               <div
@@ -291,17 +295,17 @@ export const PlayerDetailPanel = () => {
 
           <div className="flex items-center justify-between">
             <button onClick={toggleShuffle} className={clsx(shuffleMode ? 'text-neon-rock' : 'text-white/20')}>
-              <Shuffle size={16} />
+              <Shuffle size={14} />
             </button>
-            <div className="flex items-center gap-8">
-              <button onClick={playPrevious} className="text-white/40 hover:text-white transition-colors"><SkipBack size={20} fill="currentColor" /></button>
-              <button onClick={togglePlayPause} className="w-12 h-12 bg-white text-black rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5">
-                {isPlaying ? <Pause size={20} fill="black" /> : <Play size={20} fill="black" className="ml-1" />}
+            <div className="flex items-center gap-6">
+              <button onClick={playPrevious} className="text-white/40 hover:text-white transition-colors"><SkipBack size={18} fill="currentColor" /></button>
+              <button onClick={togglePlayPause} className="w-10 h-10 bg-white text-black rounded-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5">
+                {isPlaying ? <Pause size={16} fill="black" /> : <Play size={16} fill="black" className="ml-1" />}
               </button>
-              <button onClick={playNext} className="text-white/40 hover:text-white transition-colors"><SkipForward size={20} fill="currentColor" /></button>
+              <button onClick={playNext} className="text-white/40 hover:text-white transition-colors"><SkipForward size={18} fill="currentColor" /></button>
             </div>
             <button onClick={toggleRepeat} className={clsx(repeatMode !== 'off' ? 'text-neon-rock' : 'text-white/20')}>
-              {repeatMode === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
+              {repeatMode === 'one' ? <Repeat1 size={14} /> : <Repeat size={14} />}
             </button>
           </div>
 

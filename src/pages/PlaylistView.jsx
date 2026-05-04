@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ListMusic, Play, Loader, Music } from 'lucide-react';
+import { ListMusic, Play, Loader, Music, ArrowLeft } from 'lucide-react';
 import { saavnApi } from '../api/jiosaavn';
 import { usePlayerStore } from '../store/playerStore';
 import { SongCard } from '../components/SongCard';
@@ -54,9 +54,20 @@ export const PlaylistView = () => {
   };
 
   return (
-    <div className="min-h-full">
-      {/* Header */}
-      <div className="px-8 pt-14 pb-10 relative overflow-hidden">
+    <div className="min-h-full relative">
+      {/* Floating Back Button - moved higher to avoid overlap */}
+      <div className="absolute top-4 left-5 md:left-8 z-50">
+        <button 
+          onClick={() => navigate(-1)}
+          className="glass p-2.5 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition-all group shadow-xl border border-white/10"
+          title="Go Back"
+        >
+          <ArrowLeft size={20} className="group-active:scale-90 transition-transform" />
+        </button>
+      </div>
+
+      {/* Header - added more padding-top to push content down */}
+      <div className="px-8 pt-16 md:pt-20 pb-10 relative overflow-hidden">
         <div className="flex items-end gap-6 relative">
           <div className="w-40 h-40 rounded-2xl glass flex items-center justify-center flex-shrink-0 shadow-neon-purple overflow-hidden">
             {playlist.image ? (

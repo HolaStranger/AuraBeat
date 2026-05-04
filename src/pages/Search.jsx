@@ -22,6 +22,8 @@ export const Search = () => {
   const { language, setLanguage, setQueue, history } = usePlayerStore();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  const [albumResults, setAlbumResults] = useState([]);
+  const [playlistResults, setPlaylistResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
@@ -38,17 +40,39 @@ export const Search = () => {
     });
   }, [language]);
 
-  // Debounced search — genre chips use 'all' to skip language filter
+  // Debounced search
   useEffect(() => {
     const t = setTimeout(async () => {
       if (query.trim().length > 1) {
         setLoading(true);
         const searchLang = isGenreSearch ? 'all' : language;
-        const data = await saavnApi.search(query, searchLang);
-        setResults(data);
+        
+        // Search songs, albums, and playlists simultaneously
+        const [songData, albumData, playlistData] = await Promise.all([
+          saavnApi.search(query, searchLang),
+          saavnApi.searchAlbums(query),
+          saavnApi.searchPlaylists(query)
+        ]);
+        
+        // De-duplicate songs by title (clean version) to avoid clutter
+        const uniqueSongs = [];
+        const seenTitles = new Set();
+        for (const s of (songData || [])) {
+          const clean = s.title.toLowerCase().split('(')[0].trim();
+          if (!seenTitles.has(clean)) {
+            uniqueSongs.push(s);
+            seenTitles.add(clean);
+          }
+        }
+        
+        setResults(uniqueSongs);
+        setAlbumResults(albumData);
+        setPlaylistResults(playlistData);
         setLoading(false);
       } else if (!query.trim()) {
         setResults([]);
+        setAlbumResults([]);
+        setPlaylistResults([]);
       }
     }, 400);
     return () => clearTimeout(t);
@@ -140,16 +164,90 @@ export const Search = () => {
             <div className="w-2.5 h-2.5 rounded-full bg-neon-rock animate-bounce" style={{ animationDelay: '150ms' }} />
             <div className="w-2.5 h-2.5 rounded-full bg-neon-rock animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-        ) : isSearching && results.length > 0 ? (
-          <>
-            <p className="text-white/30 text-xs mb-5 uppercase tracking-widest">{results.length} results for "{query}"</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
-              {results.map((song, i) => (
-                <SongCard key={song.id} song={song} onClick={() => play(results, i)} />
-              ))}
-            </div>
-          </>
-        ) : isSearching && results.length === 0 ? (
+        ) : isSearching && (results.length > 0 || albumResults.length > 0) ? (
+          <div className="space-y-12">
+            {/* Songs Section */}
+            {results.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-5">
+                  <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">Top Songs</p>
+                  <p className="text-white/20 text-[10px]">{results.length} found</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                  {results.map((song, i) => (
+                    <SongCard key={song.id} song={song} onClick={() => play(results, i)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Albums Section */}
+            {albumResults.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-5">
+                  <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">Albums & Movies</p>
+                  <p className="text-white/20 text-[10px]">{albumResults.length} found</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                  {albumResults.map((album) => (
+                    <Link 
+                      key={album.id} 
+                      to={`/album/${album.id}`}
+                      className="glass rounded-2xl p-3 border border-white/5 hover:border-neon-rock/30 transition-all group"
+                    >
+                      <div className="aspect-square rounded-xl overflow-hidden mb-3 relative">
+                        <img src={album.image} alt={album.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-neon-rock flex items-center justify-center">
+                            <ChevronRight size={20} className="text-white" />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-white truncate group-hover:text-neon-rock transition-colors">{album.title}</p>
+                      <p className="text-[10px] text-white/30 truncate mt-1 uppercase tracking-wider">{album.artist}</p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Playlists Section */}
+            {playlistResults.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">Playlists & Jukeboxes</p>
+                    <span className="px-1.5 py-0.5 rounded bg-white/5 text-white/20 text-[8px] font-bold">Collections</span>
+                  </div>
+                  <p className="text-white/20 text-[10px]">{playlistResults.length} found</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                  {playlistResults.map((playlist) => (
+                    <Link 
+                      key={playlist.id} 
+                      to={`/view/playlist/${playlist.id}`}
+                      className="glass rounded-2xl p-3 border border-white/5 hover:border-neon-purple/30 transition-all group"
+                    >
+                      <div className="aspect-square rounded-xl overflow-hidden mb-3 relative">
+                        <img src={playlist.image} alt={playlist.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-60" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-neon-purple group-hover:border-neon-purple transition-all shadow-lg group-hover:shadow-neon-purple/20">
+                            <Play size={18} className="text-white ml-1 fill-white/20" />
+                          </div>
+                        </div>
+                        <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/40 backdrop-blur-md text-[8px] font-black text-white/60 uppercase tracking-widest border border-white/5">
+                          Jukebox
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-white truncate group-hover:text-neon-purple transition-colors">{playlist.name}</p>
+                      <p className="text-[10px] text-white/30 truncate mt-1 uppercase tracking-wider">{playlist.subtitle || 'Movie Collection'}</p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        ) : isSearching && results.length === 0 && albumResults.length === 0 && playlistResults.length === 0 ? (
           <div className="text-center py-20 text-white/25">
             <p className="text-lg font-semibold text-white/40">Nothing found for "{query}"</p>
             <p className="text-sm mt-2">Try a different search term or language</p>

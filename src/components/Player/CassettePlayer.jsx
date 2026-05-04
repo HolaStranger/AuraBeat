@@ -41,7 +41,7 @@ export const CassettePlayer = () => {
     <div className="h-[80px] md:h-[88px] bg-[#010103] border-t border-white/[0.02] flex flex-col relative z-50 overflow-hidden select-none">
       {/* Enhanced Progress ribbon */}
       <div
-        className="w-full h-[4px] md:h-[6px] cursor-pointer group relative z-10 bg-white/5 hover:h-2 transition-all duration-300"
+        className="w-full h-[4px] md:h-[6px] cursor-pointer group relative z-10 bg-white/15 hover:h-2 transition-all duration-300"
         onClick={handleSeek}
       >
         <div

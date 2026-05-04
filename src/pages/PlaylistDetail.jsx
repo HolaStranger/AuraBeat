@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ListMusic, Play, Trash2, Music } from 'lucide-react';
+import { ListMusic, Play, Trash2, Music, ArrowLeft } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { SongCard } from '../components/SongCard';
 
@@ -38,9 +38,20 @@ export const PlaylistDetail = () => {
   };
 
   return (
-    <div className="min-h-full">
-      {/* Header */}
-      <div className="px-5 md:px-8 pt-10 md:pt-14 pb-8 md:pb-10 relative overflow-hidden">
+    <div className="min-h-full relative">
+      {/* Floating Back Button - moved higher to avoid overlap */}
+      <div className="absolute top-4 left-5 md:left-8 z-50">
+        <button 
+          onClick={() => navigate(-1)}
+          className="glass p-2.5 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition-all group shadow-xl border border-white/10"
+          title="Go Back"
+        >
+          <ArrowLeft size={20} className="group-active:scale-90 transition-transform" />
+        </button>
+      </div>
+
+      {/* Header - added more padding-top to push content down */}
+      <div className="px-5 md:px-8 pt-16 md:pt-20 pb-8 md:pb-10 relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-6 relative text-center md:text-left">
           <div className="w-40 h-40 rounded-2xl glass flex items-center justify-center flex-shrink-0 shadow-neon-purple">
             <ListMusic size={64} className="text-white/20" />

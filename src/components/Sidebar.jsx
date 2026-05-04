@@ -10,7 +10,7 @@ const NAV = [
   { name: 'History', path: '/history', icon: History },
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ onNavigate }) => {
   const { likedSongs, playlists, createPlaylist } = usePlayerStore();
   const [showNewInput, setShowNewInput] = useState(false);
   const [newName, setNewName] = useState('');
@@ -25,33 +25,34 @@ export const Sidebar = () => {
   };
 
   return (
-    <aside className="w-full h-full hidden md:flex flex-col flex-shrink-0 bg-[#020205]">
+    <aside className="w-full h-full flex flex-col flex-shrink-0 bg-[#020205] border-r border-white/5 shadow-2xl">
       {/* Logo */}
       <div className="px-6 pt-7 pb-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl gradient-btn flex items-center justify-center shadow-neon-purple">
-            <Music2 size={18} className="text-white" strokeWidth={2.5} />
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl gradient-btn flex items-center justify-center shadow-neon-glow">
+            <Music2 size={20} className="text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <p className="font-bold text-base text-white leading-none">AuraBeat</p>
-            <p className="text-[10px] text-white/30 mt-0.5 font-medium tracking-wider uppercase">Music</p>
+            <p className="font-black text-lg text-white leading-none tracking-tighter uppercase italic">Aura<span className="text-neon-rock">Beat</span></p>
+            <p className="text-[10px] text-white/20 mt-1 font-bold tracking-[0.3em] uppercase">Private Cloud</p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="px-3 space-y-0.5">
+      <nav className="px-3 space-y-1">
         {NAV.map((item) => (
           <NavLink
             key={item.name}
             to={item.path}
             end={item.path === '/'}
+            onClick={onNavigate}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+                'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all duration-300 group',
                 isActive
-                  ? 'bg-white/[0.04] text-white neon-border'
-                  : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+                  ? 'bg-white/[0.06] text-white shadow-lg'
+                  : 'text-white/30 hover:text-white/80 hover:bg-white/[0.03]'
               )
             }
           >
@@ -86,6 +87,7 @@ export const Sidebar = () => {
         {/* Liked Songs */}
         <NavLink
           to="/library"
+          onClick={onNavigate}
           className={({ isActive }) => clsx(
             "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1",
             isActive ? "bg-white/10 text-white neon-border" : "text-white/40 hover:text-white/80 hover:bg-white/5"
@@ -120,6 +122,7 @@ export const Sidebar = () => {
             <NavLink
               key={pl.id}
               to={`/playlist/${pl.id}`}
+              onClick={onNavigate}
               className={({ isActive }) => clsx(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                 isActive ? "bg-white/[0.04] text-white neon-border" : "text-white/40 hover:text-white/80 hover:bg-white/[0.02]"

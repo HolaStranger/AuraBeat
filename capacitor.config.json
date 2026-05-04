@@ -1,0 +1,10 @@
+{
+  "appId": "com.retrotape.app",
+  "appName": "RetroTape",
+  "webDir": "dist",
+  "cordova": {
+    "preferences": {
+      "KeepRunning": "true"
+    }
+  }
+}

@@ -85,7 +85,7 @@ export const usePlayer = () => {
 
       howlRef.current = new Howl({
         src: [url],
-        html5: false, // Use Web Audio for visualizer support
+        html5: true, // html5 mode lets us access the audio element for pitch preservation
         format: ['mp3', 'aac', 'mp4'],
         volume: volume,
         rate: playbackSpeed,
@@ -94,18 +94,50 @@ export const usePlayer = () => {
           setDuration(howlRef.current.duration());
           rafRef.current = requestAnimationFrame(updateProgress);
 
-          // Connect to Analyser for visualizer
-          if (!analyserRef.current) {
-            analyserRef.current = Howler.ctx.createAnalyser();
-            analyserRef.current.fftSize = 256;
-          }
-          // Note: masterGain is already connected to ctx.destination
-          Howler.masterGain.connect(analyserRef.current);
+          // Preserve pitch when changing playback rate (so voice doesn't chipmunk)
+          try {
+            const audioEl = howlRef.current?._sounds?.[0]?._node;
+            if (audioEl) {
+              audioEl.preservesPitch = true;
+              audioEl.mozPreservesPitch = true; // Firefox fallback
+              audioEl.webkitPreservesPitch = true; // Safari fallback
+              audioEl.playbackRate = playbackSpeed;
+            }
+          } catch (e) { /* not critical */ }
+
+          // Connect to Analyser for visualizer (best-effort for html5 mode)
+          try {
+            if (Howler.ctx && !analyserRef.current) {
+              analyserRef.current = Howler.ctx.createAnalyser();
+              analyserRef.current.fftSize = 256;
+            }
+            if (Howler.masterGain && analyserRef.current) {
+              Howler.masterGain.connect(analyserRef.current);
+            }
+          } catch (e) { /* visualizer optional */ }
         },
-        onend: () => {
+        onend: async () => {
           cancelAnimationFrame(rafRef.current);
-          if (repeatMode === 'one') howlRef.current.play();
-          else playNext();
+          if (repeatMode === 'one') {
+            howlRef.current.play();
+          } else if (currentIndex < queue.length - 1) {
+            playNext();
+          } else {
+            // Radio Mode: If queue ends, fetch similar songs and keep playing
+            try {
+              const similarSongs = await saavnApi.getSimilarSongs(song.id);
+              if (similarSongs.length > 0) {
+                const { setQueue, setCurrentIndex } = usePlayerStore.getState();
+                setQueue([...queue, ...similarSongs]);
+                setCurrentIndex(currentIndex + 1);
+                setIsPlaying(true);
+              } else {
+                setIsPlaying(false);
+              }
+            } catch (e) {
+              setIsPlaying(false);
+            }
+          }
         },
         onloaderror: () => { setIsPlaying(false); },
         onplayerror: (id, error) => {
@@ -143,10 +175,20 @@ export const usePlayer = () => {
     }
   }, [isPlaying, updateProgress]);
 
-  // Sync playback speed
+  // Sync playback speed — preserve pitch so voice doesn't change
   useEffect(() => {
     if (howlRef.current) {
       howlRef.current.rate(playbackSpeed);
+      // Also set preservesPitch directly on the HTML5 audio element
+      try {
+        const audioEl = howlRef.current?._sounds?.[0]?._node;
+        if (audioEl) {
+          audioEl.preservesPitch = true;
+          audioEl.mozPreservesPitch = true;
+          audioEl.webkitPreservesPitch = true;
+          audioEl.playbackRate = playbackSpeed;
+        }
+      } catch (e) { /* not critical */ }
     }
   }, [playbackSpeed]);
 
@@ -166,12 +208,63 @@ export const usePlayer = () => {
     return () => clearInterval(timer);
   }, [sleepTimer.active, sleepTimer.endAt, setIsPlaying, setSleepTimer]);
 
-  const seek = (seconds) => {
+  const seek = useCallback((seconds) => {
     if (howlRef.current) {
       howlRef.current.seek(seconds);
       setProgress(seconds);
     }
-  };
+  }, []);
+
+  // Media Session API for native controls
+  useEffect(() => {
+    if (!song || !('mediaSession' in navigator)) return;
+
+    // The song object from the store uses 'title' and 'artist'
+    const metadata = {
+      title: song.title,
+      artist: song.artist,
+      album: song.album,
+      artwork: [
+        // It's good practice to provide multiple sizes
+        { src: song.image, sizes: '96x96', type: 'image/jpeg' },
+        { src: song.image, sizes: '128x128', type: 'image/jpeg' },
+        { src: song.image, sizes: '192x192', type: 'image/jpeg' },
+        { src: song.image, sizes: '256x256', type: 'image/jpeg' },
+        { src: song.image, sizes: '384x384', type: 'image/jpeg' },
+        { src: song.image, sizes: '512x512', type: 'image/jpeg' },
+      ]
+    };
+
+    navigator.mediaSession.metadata = new MediaMetadata(metadata);
+    
+    // Set playback state for the OS
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+    const actionHandlers = [
+      ['play', () => setIsPlaying(true)],
+      ['pause', () => setIsPlaying(false)],
+      ['previoustrack', playPrevious],
+      ['nexttrack', playNext],
+      ['seekbackward', (details) => {
+        const skipTime = details.seekOffset || 10;
+        if(howlRef.current) seek(howlRef.current.seek() - skipTime);
+      }],
+      ['seekforward', (details) => {
+        const skipTime = details.seekOffset || 10;
+        if(howlRef.current) seek(howlRef.current.seek() + skipTime);
+      }]
+    ];
+
+    for (const [action, handler] of actionHandlers) {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (error) {
+        console.warn(`The media session action '${action}' is not supported.`);
+      }
+    }
+  // We need to re-run this effect when the song or play state changes.
+  // The functions from the hook are memoized with useCallback, so they are safe dependencies.
+  }, [song, isPlaying, playNext, playPrevious, seek, setIsPlaying]);
 
   const togglePlayPause = () => setIsPlaying(!isPlaying);
 

@@ -40,17 +40,17 @@ export const PlaylistDetail = () => {
   return (
     <div className="min-h-full">
       {/* Header */}
-      <div className="px-8 pt-14 pb-10 relative overflow-hidden">
-        <div className="flex items-end gap-6 relative">
+      <div className="px-5 md:px-8 pt-10 md:pt-14 pb-8 md:pb-10 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-6 relative text-center md:text-left">
           <div className="w-40 h-40 rounded-2xl glass flex items-center justify-center flex-shrink-0 shadow-neon-purple">
             <ListMusic size={64} className="text-white/20" />
           </div>
 
           <div className="flex-1">
             <p className="text-white/30 text-xs uppercase tracking-widest mb-2 font-semibold">Playlist</p>
-            <h1 className="text-4xl font-extrabold text-white mb-4">{playlist.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4">{playlist.name}</h1>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center md:justify-start gap-4">
               <p className="text-white/40 text-sm">{playlist.songs.length} tracks</p>
               {playlist.songs.length > 0 && (
                 <button
@@ -73,7 +73,7 @@ export const PlaylistDetail = () => {
       </div>
 
       {/* Content */}
-      <div className="px-8 pb-12">
+      <div className="px-5 md:px-8 pb-12">
         {playlist.songs.length === 0 ? (
           <div className="text-center py-24 text-white/10">
             <div className="w-16 h-16 rounded-full glass flex items-center justify-center mx-auto mb-6">
@@ -83,7 +83,7 @@ export const PlaylistDetail = () => {
             <p className="text-sm mt-2 max-w-xs mx-auto">Click the three dots on any song to add it here!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
             {playlist.songs.map((song, i) => (
               <SongCard 
                 key={`${song.id}-${i}`} 

@@ -23,7 +23,7 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
   return (
     <div
       onClick={handlePlayClick}
-      className="group relative glass rounded-2xl p-3 cursor-pointer transition-all duration-500 hover:bg-white/[0.02] hover:shadow-neon-rock hover:border-neon-rock/10 border border-transparent hover:-translate-y-1.5"
+      className="group relative glass rounded-2xl p-2.5 cursor-pointer transition-all duration-500 hover:bg-white/[0.05] hover:shadow-neon-rock/20 border border-transparent hover:border-white/10 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
     >
       {/* Badge */}
       {(isTrending || isNew) && (
@@ -64,13 +64,24 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
       </div>
 
       {/* Info */}
-      <div className="min-w-0 pr-10">
-        <h3 className="font-semibold text-sm text-white truncate">{song?.title || 'Unknown Track'}</h3>
+      <div className="min-w-0 pr-1">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold text-sm text-white truncate flex-1">{song?.title || 'Unknown Track'}</h3>
+          <button
+            onClick={handleLikeClick}
+            className={clsx(
+              'flex-shrink-0 transition-all duration-200',
+              isLiked ? 'text-neon-pink' : 'text-white/20 hover:text-white/60'
+            )}
+          >
+            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} strokeWidth={isLiked ? 0 : 2} />
+          </button>
+        </div>
         {song?.artistId ? (
           <Link 
             to={`/artist/${song.artistId}`}
             onClick={(e) => e.stopPropagation()}
-            className="text-xs text-white/40 truncate mt-0.5 hover:text-neon-purple hover:underline inline-block transition-colors"
+            className="text-xs text-white/40 truncate mt-0.5 hover:text-neon-purple hover:underline inline-block transition-colors max-w-full"
           >
             {song?.artist || 'Unknown Artist'}
           </Link>
@@ -79,26 +90,14 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
         )}
       </div>
 
-      {/* Actions */}
-      <div className="absolute bottom-3 right-3 flex items-center gap-1 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={handleLikeClick}
-          className={clsx(
-            'p-1.5 rounded-full transition-all duration-200',
-            isLiked
-              ? 'text-neon-pink opacity-100'
-              : 'text-white/30 hover:text-white/60 hover:bg-white/5'
-          )}
-        >
-          <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} strokeWidth={isLiked ? 0 : 2} />
-        </button>
-
+      {/* Actions - Top Right More Menu */}
+      <div className="absolute top-4 right-4 z-20 group-hover:opacity-100 transition-opacity">
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
             className={clsx(
-              "p-1.5 rounded-full transition-all",
-              showMenu ? "text-white bg-white/10" : "text-white/30 hover:text-white hover:bg-white/5"
+              "p-1.5 rounded-full backdrop-blur-md transition-all shadow-lg",
+              showMenu ? "text-white bg-white/20" : "text-white/50 bg-black/40 hover:text-white hover:bg-black/60"
             )}
           >
             <MoreVertical size={14} />

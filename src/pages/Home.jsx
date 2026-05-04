@@ -8,6 +8,9 @@ import { Grid } from '../components/Grid';
 import { SongCardSkeleton } from '../components/skeletons/SongCardSkeleton';
 import { GridItemSkeleton } from '../components/skeletons/GridItemSkeleton';
 import { usePlayerStore } from '../store/playerStore';
+import { PageTransition } from '../components/PageTransition';
+
+const LANGUAGES = ['tamil', 'hindi', 'english', 'telugu', 'all'];
 
 const formatTime = (s) => {
   if (!s || isNaN(s)) return '--:--';
@@ -33,8 +36,19 @@ const SongRow = ({ song, index, onPlay }) => {
 
       <div className="flex items-center gap-3 min-w-0">
         <img src={song.image} alt={song.title} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-white truncate">{song.title}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-white truncate">{song.title}</p>
+            <button
+              onClick={e => { e.stopPropagation(); toggleLike(song); }}
+              className={clsx(
+                "transition-all duration-200",
+                isLiked ? "text-neon-pink" : "text-white/10 hover:text-white/40"
+              )}
+            >
+              <Heart size={12} fill={isLiked ? "currentColor" : "none"} strokeWidth={isLiked ? 0 : 2} />
+            </button>
+          </div>
           {song.artistId ? (
             <Link
               to={`/artist/${song.artistId}`}
@@ -50,13 +64,6 @@ const SongRow = ({ song, index, onPlay }) => {
       </div>
 
       <div className="flex items-center gap-4 text-white/30 text-sm">
-        <button
-          onClick={e => { e.stopPropagation(); toggleLike(song); }}
-          className={`transition-opacity ${isLiked ? 'text-neon-pink opacity-100' : 'text-white/30 hover:text-white/60'}`}
-        >
-          <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} strokeWidth={isLiked ? 0 : 2} />
-        </button>
-
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
@@ -132,7 +139,7 @@ export const Home = () => {
     Promise.all([
       saavnApi.getTrending(language),
       saavnApi.getNewReleases(language),
-      saavnApi.searchPlaylists(`top ${language}`),
+      saavnApi.searchPlaylists('top hits', language),
     ])
       .then(([t, n, p]) => {
         setTrending(t.slice(0, 10));
@@ -152,19 +159,42 @@ export const Home = () => {
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="min-h-full pb-24">
+    <PageTransition>
+    <div className="min-h-full pb-32">
       {/* Hero header */}
-      <div className="px-8 pt-12 pb-8">
-        <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.4em] mb-3">{greeting}</p>
-        <h1 className="text-5xl font-black text-white mb-2 tracking-tighter leading-none">
-          Discover<span className="text-neon-rock">.</span>
-        </h1>
-        <p className="text-white/20 text-xs tracking-wider mt-1">
-          Handpicked for you in <span className="text-neon-rock/60 font-bold uppercase">{language}</span>
-        </p>
+      <div className="px-5 md:px-8 pt-8 md:pt-12 pb-6 md:pb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.4em] mb-3">{greeting}</p>
+            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-1">
+              Discover<span className="text-neon-rock">.</span>
+            </h1>
+            <p className="text-white/20 text-xs tracking-[0.2em] uppercase font-bold mt-2">
+              Personalized for your <span className="text-neon-rock">Aura</span>
+            </p>
+          </div>
+
+          {/* Interaction Chips */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang}
+                onClick={() => usePlayerStore.getState().setLanguage(lang)}
+                className={clsx(
+                  "px-5 py-2 rounded-full text-xs font-bold capitalize transition-all duration-300",
+                  language === lang
+                    ? "gradient-btn text-white shadow-lg shadow-neon-rock/20 scale-105"
+                    : "glass text-white/30 hover:text-white/80 hover:bg-white/10"
+                )}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="px-8 space-y-10">
+      <div className="px-5 md:px-8 space-y-10">
         {loading ? (
           <>
             <section>
@@ -172,8 +202,8 @@ export const Home = () => {
                 <div className="w-1 h-6 bg-gray-700 rounded-full animate-pulse" />
                 <div className="h-6 w-40 rounded bg-gray-700 animate-pulse"></div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {[...Array(5)].map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                {[...Array(6)].map((_, i) => (
                   <SongCardSkeleton key={i} />
                 ))}
               </div>
@@ -183,8 +213,8 @@ export const Home = () => {
                 <div className="w-1 h-6 bg-gray-700 rounded-full animate-pulse" />
                 <div className="h-6 w-40 rounded bg-gray-700 animate-pulse"></div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {[...Array(5)].map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                {[...Array(6)].map((_, i) => (
                   <GridItemSkeleton key={i} />
                 ))}
               </div>
@@ -196,17 +226,16 @@ export const Home = () => {
             <section>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-1 h-6 bg-neon-rock rounded-full" />
-.
                 <h2 className="text-base font-black text-white uppercase tracking-[0.25em]">Fresh Drops</h2>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {newReleases.slice(0, 5).map((song, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                {newReleases.slice(0, 6).map((song, i) => (
                   <SongCard key={song.id} song={song} isNew onClick={() => play(newReleases, i)} />
                 ))}
               </div>
             </section>
 
-            <Grid title="Top Playlists" items={playlists} type="playlist" />
+            {playlists.length > 0 && <Grid title="Top Playlists" items={playlists} type="view/playlist" />}
 
             {/* Top Charts – Vertical List */}
             <section>
@@ -232,5 +261,6 @@ export const Home = () => {
         )}
       </div>
     </div>
+    </PageTransition>
   );
 };

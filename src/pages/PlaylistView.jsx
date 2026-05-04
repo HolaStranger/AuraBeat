@@ -87,7 +87,7 @@ export const PlaylistView = () => {
 
       {/* Content */}
       <div className="px-8 pb-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
           {playlist.songs?.map((song, i) => (
             <SongCard 
               key={`${song.id}-${i}`} 

@@ -17,10 +17,10 @@ export const History = () => {
   };
 
   return (
-    <div className="min-h-full px-8 pt-14 pb-8">
-      <div className="flex items-end justify-between mb-8">
+    <div className="min-h-full px-5 md:px-8 pt-10 md:pt-14 pb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-extrabold text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">
             Recently <span className="gradient-text">Played</span>
           </h1>
           <p className="text-white/30 text-sm">Your last 50 tracks</p>
@@ -29,7 +29,7 @@ export const History = () => {
         {history.length > 0 && (
           <button
             onClick={clearHistory}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white/40 hover:text-white/80 hover:bg-white/5 transition-all"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white/40 hover:text-white/80 hover:bg-white/5 transition-all"
           >
             <Trash2 size={16} />
             Clear History
@@ -46,7 +46,7 @@ export const History = () => {
           <p className="text-sm mt-2">Start listening to build your collection</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
           {history.map((song, i) => (
             <SongCard key={`${song.id}-${i}`} song={song} onClick={() => play(history, i)} />
           ))}

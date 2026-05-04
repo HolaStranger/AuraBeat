@@ -50,23 +50,23 @@ export const Artist = () => {
   return (
     <div className="min-h-full">
       {/* Header */}
-      <div className="px-8 pt-16 pb-10 relative overflow-hidden">
-        <div className="flex items-end gap-8 relative">
+      <div className="px-5 md:px-8 pt-10 md:pt-16 pb-8 md:pb-10 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 relative text-center md:text-left">
           <img 
             src={artist.image?.[artist.image.length-1]?.link || 'https://placehold.co/300x300/1a0a2e/8b5cf6?text=Artist'} 
             alt={artist.name}
-            className="w-48 h-48 rounded-full object-cover shadow-neon-purple border-4 border-white/5"
+            className="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover shadow-neon-purple border-4 border-white/5"
           />
           <div className="flex-1">
-            <div className="flex items-center gap-2 text-blue-400 mb-2">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-blue-400 mb-2">
               <span className="bg-blue-500/10 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-widest border border-blue-500/20">Verified Artist</span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-black text-white mb-6 drop-shadow-xl">{decodeHtml(artist.name)}</h1>
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-4 md:mb-6 drop-shadow-xl">{decodeHtml(artist.name)}</h1>
             
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
               <button 
                 onClick={playTopSongs}
-                className="flex items-center gap-2 gradient-btn text-white text-sm font-bold px-8 py-3 rounded-full shadow-neon-purple"
+                className="w-full md:w-auto flex items-center justify-center gap-2 gradient-btn text-white text-sm font-bold px-8 py-3 rounded-full shadow-neon-purple"
               >
                 <Play size={18} fill="white" /> Play Top Songs
               </button>
@@ -79,11 +79,11 @@ export const Artist = () => {
       </div>
 
       {/* Content */}
-      <div className="px-8 pb-12 space-y-12">
+      <div className="px-5 md:px-8 pb-12 space-y-12">
         {/* Top Songs */}
         <section>
           <h2 className="text-xl font-bold text-white mb-6">Popular Tracks</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
             {artist.topSongs.slice(0, 5).map((song, i) => (
               <SongCard 
                 key={song.id} 
@@ -102,7 +102,7 @@ export const Artist = () => {
         {artist.topAlbums && artist.topAlbums.length > 0 && (
           <section>
             <h2 className="text-xl font-bold text-white mb-6">Albums</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
               {artist.topAlbums.map((album) => (
                 <div 
                   key={album.id}

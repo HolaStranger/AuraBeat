@@ -1,5 +1,20 @@
-import React from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
 
 export const Grid = ({ title, items, type }) => {
   return (
@@ -8,21 +23,27 @@ export const Grid = ({ title, items, type }) => {
         <div className="w-1 h-6 bg-neon-rock rounded-full" />
         <h2 className="text-base font-black text-white uppercase tracking-[0.25em]">{title}</h2>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4"
+      >
         {items.map((item) => (
-          <Link
-            key={item.id}
-            to={`/${type}/${item.id}`}
-            className="group glass rounded-2xl p-4 w-full flex-shrink-0 cursor-pointer hover:bg-white/[0.07] hover:shadow-neon-purple transition-all"
-          >
-            <div className="relative aspect-square mb-3 rounded-xl overflow-hidden">
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-            </div>
-            <h3 className="font-semibold text-sm text-white truncate">{item.name}</h3>
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{item.subtitle}</p>
-          </Link>
+          <motion.div key={item.id} variants={itemVariants}>
+            <Link
+              to={`/${type}/${item.id}`}
+              className="group glass rounded-2xl p-3 w-full block cursor-pointer hover:bg-white/[0.07] hover:shadow-neon-purple/20 border border-transparent hover:border-white/10 transition-all duration-300"
+            >
+              <div className="relative aspect-square mb-3 rounded-xl overflow-hidden">
+                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              </div>
+              <h3 className="font-semibold text-sm text-white truncate">{item.name}</h3>
+              <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{item.subtitle}</p>
+            </Link>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 };

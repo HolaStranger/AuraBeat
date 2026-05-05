@@ -68,27 +68,26 @@ function App() {
           {/* Left Sidebar (Desktop & Mobile Overlay) */}
           <aside 
             className={clsx(
-              "h-full fixed xl:relative z-[120] xl:z-40 bg-[#020205] border-r border-white/[0.02] transition-transform duration-300 ease-in-out",
-              (isMobile || isTablet) ? (isSidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
+              "h-full fixed xl:relative z-[120] xl:z-40 bg-[#020205] border-r border-white/[0.02] transition-all duration-300 ease-in-out",
+              isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0 xl:absolute"
             )}
-            style={{ width: (isMobile || isTablet) ? 280 : leftWidth }}
+            style={{ 
+              width: (isMobile || isTablet) ? 280 : leftWidth,
+              visibility: isSidebarOpen ? 'visible' : 'hidden' 
+            }}
           >
-            {isMobile && isSidebarOpen && (
-              <button 
-                onClick={() => setIsSidebarOpen(false)}
-                className="absolute top-6 right-[-50px] p-2 bg-black/50 backdrop-blur-md rounded-full text-white/50"
-              >
-                <X size={24} />
-              </button>
-            )}
             <div 
               className="absolute top-0 right-[-2px] bottom-0 w-[4px] cursor-col-resize hover:bg-neon-rock/50 active:bg-neon-rock z-50 transition-colors hidden xl:block"
               onMouseDown={startResizingLeft}
             />
             <div className="w-full h-full overflow-hidden">
-              <Sidebar onNavigate={() => isMobile && setIsSidebarOpen(false)} />
+              <Sidebar 
+                onNavigate={() => isMobile && setIsSidebarOpen(false)} 
+                onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+              />
             </div>
           </aside>
+
 
           {/* Backdrop for mobile sidebar */}
           {isMobile && isSidebarOpen && (
@@ -102,12 +101,14 @@ function App() {
           <main className="flex-1 overflow-y-auto relative custom-scrollbar bg-black flex flex-col">
             {/* Header with Hamburger */}
             <header className="h-16 flex items-center px-5 md:px-8 border-b border-white/[0.02] bg-black/50 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
-              <button 
-                onClick={() => setIsSidebarOpen(true)}
-                className="xl:hidden p-2 -ml-2 text-white/50 hover:text-white transition-colors"
-              >
-                <Menu size={24} />
-              </button>
+              {!isSidebarOpen && (
+                <button 
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-2 -ml-2 text-white/50 hover:text-white transition-colors animate-in fade-in zoom-in-75 duration-300"
+                >
+                  <Menu size={24} />
+                </button>
+              )}
               <div className="ml-auto flex items-center gap-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 hidden sm:block">AuraBeat Personal V2.0</p>
               </div>

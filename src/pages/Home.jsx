@@ -77,7 +77,7 @@ const SongRow = ({ song, index, onPlay }) => {
 
           {showMenu && (
             <div
-              className="absolute bottom-full right-0 mb-2 w-48 glass rounded-xl py-2 shadow-neon-purple z-[70] animate-in fade-in slide-in-from-bottom-1"
+              className="absolute bottom-full right-0 mb-2 w-48 bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-xl py-2 shadow-2xl border border-white/10 z-[70] animate-in fade-in slide-in-from-bottom-1"
               onMouseLeave={() => setShowMenu(false)}
             >
               <p className="px-4 py-1 text-[10px] font-bold text-white/25 uppercase tracking-widest border-b border-white/5 mb-1">Add to Playlist</p>

@@ -10,7 +10,7 @@ const NAV = [
   { name: 'History', path: '/history', icon: History },
 ];
 
-export const Sidebar = ({ onNavigate }) => {
+export const Sidebar = ({ onNavigate, onToggle }) => {
   const { likedSongs, playlists, createPlaylist } = usePlayerStore();
   const [showNewInput, setShowNewInput] = useState(false);
   const [newName, setNewName] = useState('');
@@ -26,8 +26,8 @@ export const Sidebar = ({ onNavigate }) => {
 
   return (
     <aside className="w-full h-full flex flex-col flex-shrink-0 bg-[#020205] border-r border-white/5 shadow-2xl">
-      {/* Logo */}
-      <div className="px-6 pt-7 pb-6">
+      {/* Logo & Toggle */}
+      <div className="px-6 pt-7 pb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-btn flex items-center justify-center shadow-neon-glow">
             <Music2 size={20} className="text-white" strokeWidth={2.5} />
@@ -37,6 +37,12 @@ export const Sidebar = ({ onNavigate }) => {
             <p className="text-[10px] text-white/20 mt-1 font-bold tracking-[0.3em] uppercase">Private Cloud</p>
           </div>
         </div>
+        <button 
+          onClick={onToggle}
+          className="p-2 -mr-2 text-white/30 hover:text-white transition-colors"
+        >
+          <MoreVertical size={20} />
+        </button>
       </div>
 
       {/* Nav */}

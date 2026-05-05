@@ -101,14 +101,13 @@ function App() {
           <main className="flex-1 overflow-y-auto relative custom-scrollbar bg-black flex flex-col">
             {/* Header with Hamburger */}
             <header className="h-16 flex items-center px-5 md:px-8 border-b border-white/[0.02] bg-black/50 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
-              {!isSidebarOpen && (
-                <button 
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="p-2 -ml-2 text-white/50 hover:text-white transition-colors animate-in fade-in zoom-in-75 duration-300"
-                >
-                  <Menu size={24} />
-                </button>
-              )}
+              <button 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="p-2 -ml-2 text-white/50 hover:text-white transition-colors flex items-center justify-center rounded-xl hover:bg-white/5"
+              >
+                {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+              <div className="ml-4 h-6 w-px bg-white/5 hidden sm:block" />
               <div className="ml-auto flex items-center gap-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 hidden sm:block">AuraBeat Personal V2.0</p>
               </div>

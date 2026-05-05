@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Library, Heart, Disc, Music2, History, Plus, ListMusic, MoreVertical } from 'lucide-react';
+import { Home, Search, Library, Heart, Disc, Music2, History, Plus, ListMusic, X } from 'lucide-react';
 import clsx from 'clsx';
 import { usePlayerStore } from '../store/playerStore';
 
@@ -39,9 +39,9 @@ export const Sidebar = ({ onNavigate, onToggle }) => {
         </div>
         <button 
           onClick={onToggle}
-          className="p-2 -mr-2 text-white/30 hover:text-white transition-colors"
+          className="xl:hidden p-2 -mr-2 text-white/30 hover:text-white transition-all hover:bg-white/5 rounded-xl active:scale-90"
         >
-          <MoreVertical size={20} />
+          <X size={20} />
         </button>
       </div>
 

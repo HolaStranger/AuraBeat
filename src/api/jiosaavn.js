@@ -1,12 +1,13 @@
 // Relative proxy paths in DEV, full public URLs in production.
-// This allows the app to work both locally (with proxy) and after deployment.
-const API_ENDPOINTS = import.meta.env.DEV 
+const isProd = import.meta.env.PROD || !window.location.hostname.includes('localhost');
+
+const API_ENDPOINTS = !isProd 
   ? ['/jio1', '/jio2', '/jio3', '/jio4']
   : [
+      'https://saavn.me',
       'https://jiosaavn-api-2.vercel.app',
       'https://jiosaavn-api-beta-one.vercel.app',
-      'https://jioapi-v3.vercel.app',
-      'https://saavn.me'
+      'https://jioapi-v3.vercel.app'
     ];
 
 let currentEndpointIndex = 0;

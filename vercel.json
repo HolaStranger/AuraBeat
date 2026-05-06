@@ -1,21 +1,7 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": false,
   "rewrites": [
-    {
-      "source": "/jio1/:path*",
-      "destination": "https://saavn.me/:path*"
-    },
-    {
-      "source": "/jio2/:path*",
-      "destination": "https://jiosaavn-api-2.vercel.app/:path*"
-    },
-    {
-      "source": "/jio3/:path*",
-      "destination": "https://jiosaavn-api-beta-one.vercel.app/:path*"
-    },
-    {
-      "source": "/jio4/:path*",
-      "destination": "https://jioapi-v3.vercel.app/:path*"
-    },
     {
       "source": "/((?!assets/|.*\\..*).*)",
       "destination": "/index.html"

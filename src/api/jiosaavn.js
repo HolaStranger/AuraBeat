@@ -1,10 +1,12 @@
-// Proxy paths — Handled by Vite in DEV and vercel.json in PROD.
-const API_ENDPOINTS = [
-  '/jio1',
-  '/jio2',
-  '/jio3',
-  '/jio4',
-];
+const isProd = import.meta.env.PROD || !window.location.hostname.includes('localhost');
+
+const API_ENDPOINTS = !isProd 
+  ? ['/jio1', '/jio2', '/jio3', '/jio4']
+  : [
+      'https://jiosaavn-api-beta-one.vercel.app/api',
+      'https://jiosaavn-api-2.vercel.app/api',
+      'https://jioapi-v3.vercel.app/api'
+    ];
 
 let currentEndpointIndex = 0;
 

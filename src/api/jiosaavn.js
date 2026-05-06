@@ -1,11 +1,13 @@
-// Relative proxy paths — Vite dev server rewrites these to the real API servers.
-// This bypasses CORS since all requests appear same-origin to the browser.
-const API_ENDPOINTS = [
-  '/jio1',
-  '/jio2',
-  '/jio3',
-  '/jio4',
-];
+// Relative proxy paths in DEV, full public URLs in production.
+// This allows the app to work both locally (with proxy) and after deployment.
+const API_ENDPOINTS = import.meta.env.DEV 
+  ? ['/jio1', '/jio2', '/jio3', '/jio4']
+  : [
+      'https://jiosaavn-api-2.vercel.app',
+      'https://jiosaavn-api-beta-one.vercel.app',
+      'https://jioapi-v3.vercel.app',
+      'https://saavn.me'
+    ];
 
 let currentEndpointIndex = 0;
 

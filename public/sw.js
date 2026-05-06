@@ -1,80 +1,72 @@
-const CACHE_NAME = 'retrotape-v1';
+const CACHE_NAME = 'aurabeat-v2-cache-v1';
 const ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
-  // CSS and JS are hashed, so we rely on runtime caching for those
+  '/manifest.json'
 ];
 
+// v2.1.0 - Force Update
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
-  // Force the waiting service worker to become the active service worker immediately
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Take control of all open pages immediately without waiting for a refresh
-  event.waitUntil(clients.claim());
+  // Clear old caches
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
+    }).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Skip caching for non-HTTP(S) requests
-  if (!url.protocol.startsWith('http')) {
-    return;
-  }
+  // 1. Skip non-HTTP(S)
+  if (!url.protocol.startsWith('http')) return;
   
-  // Skip caching for dev server (localhost)
-  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
-    return;
-  }
+  // 2. Skip DEV server
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return;
   
-  // Skip caching for ALL cross-origin requests (API calls, CDNs, etc.)
-  // This prevents the SW from intercepting API calls and returning 'Offline' text
-  if (url.origin !== self.location.origin) {
+  // 3. EXTREMELY IMPORTANT: Skip ALL API requests
+  // We check for common API indicators to prevent the SW from intercepting data
+  if (
+    url.origin !== self.location.origin || 
+    url.pathname.includes('/jio') || 
+    url.pathname.includes('/api/') ||
+    url.hostname.includes('vercel.app') ||
+    url.hostname.includes('saavn.me')
+  ) {
     return;
   }
 
-  // Skip caching for WebSocket and non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
+  // 4. Cache-first strategy for local assets
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
       
-      return fetch(event.request).then((fetchResponse) => {
-        // Only cache successful responses
-        if (fetchResponse.status !== 200) {
-          return fetchResponse;
+      return fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
         }
-        
-        const cacheCopy = fetchResponse.clone();
+
+        const toCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          try {
-            cache.put(event.request, cacheCopy);
-          } catch (err) {
-            console.warn('Cache write failed:', err);
-          }
-        }).catch((err) => {
-          console.warn('Cache open failed:', err);
+          cache.put(event.request, toCache);
         });
         
-        return fetchResponse;
-      }).catch((err) => {
-        console.warn('Fetch failed:', err);
-        return caches.match(event.request).then(cached => {
-          return cached || new Response('Offline', { 
-            status: 503,
-            headers: { 'Content-Type': 'text/plain' }
-          });
-        });
+        return response;
+      }).catch(() => {
+        // Fallback for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+        return null;
       });
     })
   );

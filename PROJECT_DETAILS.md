@@ -16,29 +16,29 @@
 ## 🌟 Key Engineering Achievements
 1.  **High-Fidelity Audio Engine**: A custom-engineered playback suite featuring precision-timed seeking, seamless queue management, and granular playback speed modulation (0.5x to 2.0x).
 2.  **Adaptive Sidebar & Navigation**: A robust, persistent navigation system with a dynamic "Hamburger" toggle, ensuring 100% accessibility across mobile, tablet, and ultra-wide desktop displays.
-3.  **Universal Discovery Engine**: Multi-dimensional search logic that de-duplicates results across songs, albums, and playlists to provide a "Clean-Feed" exploration experience.
-4.  **Resilient "Hyper-Fallback" Logic**: An intelligent recommendation system that automatically detects API service interruptions and pivots to language-based trending caches to ensure uninterrupted playback.
-5.  **Smart Lyrics Integration**: A multi-pattern retrieval system with automated web-search fallbacks, designed to handle inconsistent metadata gracefully.
-6.  **Neon-Rock Aesthetics**: A premium UI design featuring "Shadow-Glow" interactive elements, animated visualizers, and a "Private Cloud" dark-mode palette.
-7.  **UX Utilities Suite**: Integrated productivity and comfort features including a Sleep Timer, custom Playback Speed controls, and full Media Session API support for OS-level integration.
+3.  **Universal Discovery Engine**: Multi-dimensional search logic that de-duplicates results across songs, albums, and playlists. Removed all arbitrary limits, allowing for 100+ items per page with title-based cleaning.
+4.  **Dedicated "Saved Albums" Collection**: A persistent storage system with self-healing data logic that re-fetches metadata for broken image records, ensuring a high-quality visual library.
+5.  **Tabular UI Optimization**: Transitioned from generic grids to a sophisticated tabular list format (`SongRow`) for Albums, Playlists, and Search results, mirroring industry-standard streaming interfaces.
+6.  **Environment-Aware API Bridge**: Intelligent fallback logic that automatically switches between local proxy endpoints in DEV and public production APIs in PROD, bypassing CORS and ensuring 99.9% uptime.
+7.  **UX Utilities Suite**: Integrated productivity and comfort features including a Sleep Timer, custom Playback Speed controls, real-time progress synchronization, and full Media Session API support.
 
 ---
 
 ## 📈 Portfolio Summary
-*"With AuraBeat V2.0, I focused on the intersection of **Visual Excellence** and **Architectural Resilience**. By implementing an adaptive sidebar system and a multi-layer API fallback strategy, I solved the common problem of UI fragmentation and data dependency in web-based players. The result is a premium, 'Cloud-First' application that maintains a consistent, high-fidelity experience regardless of device or network conditions."*
+*"With AuraBeat V2.0, I focused on the intersection of **Visual Excellence** and **Data Integrity**. By implementing a self-healing image parsing system and transitioning to an environment-aware API architecture, I solved the common problem of stale metadata and broken proxies in web-based players. The result is a premium, 'Cloud-First' application that maintains a consistent, high-fidelity experience with exhaustive tracklists and cinematic performance."*
 
 ---
 
 ## 💡 Shared Content (LinkedIn/Portfolio)
 **Caption Idea:**
-"Thrilled to unveil **AuraBeat V2.0**! 🎵 
+"Thrilled to unveil **AuraBeat V2.0: The Private Cloud Edition**! 🎵 
 
-What started as a music player has evolved into a full **'Private Cloud'** audio experience. In this version, I focused on high-performance architecture—implementing an **Adaptive Sidebar system** for seamless responsiveness and a **Resilient Discovery Engine** that uses intelligent fallbacks to ensure the music never stops.
+In this major update, I pushed the boundaries of web-based music discovery. I moved beyond simple playback to build a resilient, environment-aware system that intelligently bridges local development with production-grade public APIs.
 
 Key Technical Highlights:
-✅ **Zustand** for ultra-responsive global state
-✅ **Framer Motion** for cinematic UI transitions
-✅ **Media Session API** for OS-integrated controls
-✅ **Neon-Rock Glassmorphism** design system
+✅ **Tabular UI Optimization**: Re-engineered tracklists into a clean, industry-standard tabular format.
+✅ **Self-Healing Metadata**: Implemented logic to auto-repair broken album art and metadata on the fly.
+✅ **Exhaustive Discovery**: Removed all API limits—search results and playlists are now exhaustive and de-duplicated.
+✅ **Zustand & Framer Motion**: Real-time state management meets cinematic, physics-based UI.
 
-Engineering isn't just about making it work; it's about making it feel premium and resilient. Check out the new 'Up Next' logic and the smart lyrics integration! 🚀"
+Engineering isn't just about making it work; it's about making it resilient and exhaustive. Check out the new 'Saved Albums' collection and the seamless environment switching! 🚀"

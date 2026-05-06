@@ -4,6 +4,7 @@ import { ListMusic, Play, Loader, Music, ArrowLeft } from 'lucide-react';
 import { saavnApi } from '../api/jiosaavn';
 import { usePlayerStore } from '../store/playerStore';
 import { SongCard } from '../components/SongCard';
+import { SongRow } from '../components/SongRow';
 
 export const PlaylistView = () => {
   const { id } = useParams();
@@ -66,8 +67,8 @@ export const PlaylistView = () => {
         </button>
       </div>
 
-      {/* Header - added more padding-top to push content down */}
-      <div className="px-8 pt-16 md:pt-20 pb-10 relative overflow-hidden">
+      {/* Header section refined */}
+      <div className="px-8 pt-6 pb-10 relative overflow-hidden">
         <div className="flex items-end gap-6 relative">
           <div className="w-40 h-40 rounded-2xl glass flex items-center justify-center flex-shrink-0 shadow-neon-purple overflow-hidden">
             {playlist.image ? (
@@ -98,16 +99,36 @@ export const PlaylistView = () => {
 
       {/* Content */}
       <div className="px-8 pb-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
-          {playlist.songs?.map((song, i) => (
-            <SongCard 
-              key={`${song.id}-${i}`} 
-              song={song} 
-              onClick={() => {
-                usePlayerStore.setState({ queue: playlist.songs, currentIndex: i, isPlaying: true });
-              }} 
-            />
-          ))}
+        <div className="rounded-2xl overflow-hidden border border-white/[0.03] bg-white/[0.01]">
+          <div
+            className="hidden md:grid px-4 py-2 border-b border-white/[0.04] text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]"
+            style={{ gridTemplateColumns: '28px 1fr auto' }}
+          >
+            <span className="text-center">#</span>
+            <span>Title</span>
+            <span className="pr-2">Time</span>
+          </div>
+          {(() => {
+            const unique = [];
+            const seen = new Set();
+            (playlist.songs || []).forEach(song => {
+              const cleanTitle = (song.title || '').toLowerCase().trim();
+              if (!seen.has(cleanTitle)) {
+                unique.push(song);
+                seen.add(cleanTitle);
+              }
+            });
+            return unique.map((song, i) => (
+              <SongRow 
+                key={`${song.id}-${i}`} 
+                song={song} 
+                index={i}
+                onPlay={() => {
+                  usePlayerStore.setState({ queue: unique, currentIndex: i, isPlaying: true });
+                }} 
+              />
+            ));
+          })()}
         </div>
       </div>
     </div>

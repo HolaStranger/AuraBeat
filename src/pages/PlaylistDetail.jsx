@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ListMusic, Play, Trash2, Music, ArrowLeft } from 'lucide-react';
+import { ListMusic, Play, Shuffle, Trash2, Music, ArrowLeft } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
-import { SongCard } from '../components/SongCard';
+import { SongRow } from '../components/SongRow';
 
 export const PlaylistDetail = () => {
   const { id } = useParams();
@@ -27,6 +27,17 @@ export const PlaylistDetail = () => {
       queue: playlist.songs,
       currentIndex: 0,
       isPlaying: true
+    });
+  };
+
+  const shufflePlay = () => {
+    if (playlist.songs.length === 0) return;
+    const shuffled = [...playlist.songs].sort(() => Math.random() - 0.5);
+    usePlayerStore.setState({
+      queue: shuffled,
+      currentIndex: 0,
+      isPlaying: true,
+      shuffleMode: true
     });
   };
 
@@ -64,12 +75,20 @@ export const PlaylistDetail = () => {
             <div className="flex items-center justify-center md:justify-start gap-4">
               <p className="text-white/40 text-sm">{playlist.songs.length} tracks</p>
               {playlist.songs.length > 0 && (
-                <button
-                  onClick={playAll}
-                  className="flex items-center gap-2 gradient-btn text-white text-sm font-semibold px-6 py-2 rounded-full shadow-neon-purple"
-                >
-                  <Play size={16} fill="white" /> Play
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={playAll}
+                    className="flex items-center gap-2 gradient-btn text-white text-sm font-semibold px-6 py-2 rounded-full shadow-neon-purple"
+                  >
+                    <Play size={16} fill="white" /> Play
+                  </button>
+                  <button
+                    onClick={shufflePlay}
+                    className="flex items-center gap-2 glass text-white/70 hover:text-white text-sm font-semibold px-6 py-2 rounded-full border border-white/5 hover:border-white/20 transition-all"
+                  >
+                    <Shuffle size={16} /> Shuffle
+                  </button>
+                </div>
               )}
               <button
                 onClick={handleDelete}
@@ -94,20 +113,40 @@ export const PlaylistDetail = () => {
             <p className="text-sm mt-2 max-w-xs mx-auto">Click the three dots on any song to add it here!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
-            {playlist.songs.map((song, i) => (
-              <SongCard 
-                key={`${song.id}-${i}`} 
-                song={song} 
-                onClick={() => {
-                  usePlayerStore.setState({
-                    queue: playlist.songs,
-                    currentIndex: i,
-                    isPlaying: true
-                  });
-                }} 
-              />
-            ))}
+          <div className="rounded-2xl overflow-hidden border border-white/[0.03] bg-white/[0.01]">
+            <div
+              className="hidden md:grid px-4 py-2 border-b border-white/[0.04] text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]"
+              style={{ gridTemplateColumns: '28px 1fr auto' }}
+            >
+              <span className="text-center">#</span>
+              <span>Title</span>
+              <span className="pr-2">Time</span>
+            </div>
+            {(() => {
+              const unique = [];
+              const seen = new Set();
+              (playlist.songs || []).forEach(song => {
+                const cleanTitle = (song.title || '').toLowerCase().trim();
+                if (!seen.has(cleanTitle)) {
+                  unique.push(song);
+                  seen.add(cleanTitle);
+                }
+              });
+              return unique.map((song, i) => (
+                <SongRow 
+                  key={`${song.id}-${i}`} 
+                  song={song} 
+                  index={i}
+                  onPlay={() => {
+                    usePlayerStore.setState({
+                      queue: unique,
+                      currentIndex: i,
+                      isPlaying: true
+                    });
+                  }} 
+                />
+              ));
+            })()}
           </div>
         )}
       </div>

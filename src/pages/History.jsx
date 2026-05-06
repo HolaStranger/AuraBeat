@@ -17,7 +17,7 @@ export const History = () => {
   };
 
   return (
-    <div className="min-h-full px-5 md:px-8 pt-10 md:pt-14 pb-8">
+    <div className="min-h-full px-5 md:px-8 pt-6 pb-8">
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">

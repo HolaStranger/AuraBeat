@@ -20,9 +20,20 @@ export const usePlayerStore = create(
 
       // User Data
       likedSongs: [],
+      savedAlbums: [], // [{ id, title, artist, image, ... }]
       playlists: [], // [{ id, name, songs: [], createdAt }]
       history: [],   // [song, song, ...]
       language: 'tamil',
+
+      // Album Actions
+      toggleSaveAlbum: (album) => set((state) => {
+        const isSaved = state.savedAlbums.some(a => a.id === album.id);
+        return { 
+          savedAlbums: isSaved 
+            ? state.savedAlbums.filter(a => a.id !== album.id) 
+            : [{ ...album, type: 'album' }, ...state.savedAlbums] 
+        };
+      }),
 
       // UI State
       togglePlayerOpen: () => set((state) => ({ isPlayerOpen: !state.isPlayerOpen })),
@@ -57,7 +68,10 @@ export const usePlayerStore = create(
       
       setCurrentIndex: (index) => {
         const song = get().queue[index];
-        if (song) get().addToHistory(song);
+        if (song) {
+          get().addToHistory(song);
+          get().updateTimeCapsule(song);
+        }
         set({ currentIndex: index });
       },
       setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -109,9 +123,45 @@ export const usePlayerStore = create(
         }
       },
 
+      // Time Capsule (Daily Aura)
+      timeCapsule: {}, // { 'YYYY-MM-DD': [song, song, ...] }
+
+      updateTimeCapsule: (song) => set((state) => {
+        const today = new Date().toISOString().split('T')[0];
+        const capsule = { ...state.timeCapsule };
+        
+        if (!capsule[today]) {
+          capsule[today] = [];
+        }
+
+        const existingIdx = capsule[today].findIndex(s => s.id === song.id);
+        if (existingIdx !== -1) {
+          // Move to top and increment internal playCount if we wanted, 
+          // but for now just ensure it's in today's list
+          const existing = capsule[today][existingIdx];
+          capsule[today].splice(existingIdx, 1);
+          capsule[today].unshift(existing);
+        } else {
+          capsule[today].unshift(song);
+        }
+
+        // Cleanup: keep only last 10 days
+        const dates = Object.keys(capsule).sort().reverse();
+        if (dates.length > 10) {
+          const newCapsule = {};
+          dates.slice(0, 10).forEach(d => {
+            newCapsule[d] = capsule[d];
+          });
+          return { timeCapsule: newCapsule };
+        }
+
+        return { timeCapsule: capsule };
+      }),
+
       // User Actions
       toggleLike: (song) => set((state) => {
         const isLiked = state.likedSongs.some(s => s.id === song.id);
+        if (!isLiked) get().updateTimeCapsule(song); // Hearts also count for the Aura
         return { likedSongs: isLiked ? state.likedSongs.filter(s => s.id !== song.id) : [song, ...state.likedSongs] };
       }),
       setLanguage: (lang) => set({ language: lang }),
@@ -127,8 +177,10 @@ export const usePlayerStore = create(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         likedSongs: state.likedSongs, 
+        savedAlbums: state.savedAlbums,
         playlists: state.playlists, 
         history: state.history,
+        timeCapsule: state.timeCapsule,
         language: state.language,
         volume: state.volume,
         playbackSpeed: state.playbackSpeed,

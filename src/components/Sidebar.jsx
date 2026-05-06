@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Library, Heart, Disc, Music2, History, Plus, ListMusic, X } from 'lucide-react';
+import { Home, Search, Library, Heart, Disc, Music2, History, Plus, ListMusic, X, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { usePlayerStore } from '../store/playerStore';
 
@@ -11,7 +11,7 @@ const NAV = [
 ];
 
 export const Sidebar = ({ onNavigate, onToggle }) => {
-  const { likedSongs, playlists, createPlaylist } = usePlayerStore();
+  const { likedSongs, savedAlbums, playlists, createPlaylist } = usePlayerStore();
   const [showNewInput, setShowNewInput] = useState(false);
   const [newName, setNewName] = useState('');
 
@@ -105,6 +105,42 @@ export const Sidebar = ({ onNavigate, onToggle }) => {
           <div className="min-w-0">
             <p className={clsx("text-sm font-semibold truncate", likedSongs.length > 0 ? "text-white" : "text-white/40")}>Liked Songs</p>
             <p className="text-white/20 text-[10px]">{likedSongs.length} tracks</p>
+          </div>
+        </NavLink>
+
+        {/* Saved Albums */}
+        <NavLink
+          to="/saved-albums"
+          onClick={onNavigate}
+          className={({ isActive }) => clsx(
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1",
+            isActive ? "bg-white/10 text-white neon-border" : "text-white/40 hover:text-white/80 hover:bg-white/5"
+          )}
+        >
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-neon-blue">
+            <Disc size={14} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className={clsx("text-sm font-semibold truncate", savedAlbums?.length > 0 ? "text-white" : "text-white/40")}>Saved Albums</p>
+            <p className="text-white/20 text-[10px]">{savedAlbums?.length || 0} albums</p>
+          </div>
+        </NavLink>
+
+        {/* Time Capsule */}
+        <NavLink
+          to="/capsule"
+          onClick={onNavigate}
+          className={({ isActive }) => clsx(
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1",
+            isActive ? "bg-white/10 text-white neon-border" : "text-white/40 hover:text-white/80 hover:bg-white/5"
+          )}
+        >
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-neon-rock">
+            <Sparkles size={14} className="text-white" fill="white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate text-white">Time Capsule</p>
+            <p className="text-white/20 text-[10px]">Your Daily Aura</p>
           </div>
         </NavLink>
 

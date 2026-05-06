@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { usePlayerStore } from '../store/playerStore';
 
-export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) => {
+export const SongCard = ({ song, onClick, isTrending = false, isNew = false, isList = false }) => {
   const navigate = useNavigate();
   const { likedSongs, toggleLike, playlists, addToPlaylist } = usePlayerStore();
   const [showMenu, setShowMenu] = useState(false);
@@ -23,18 +23,23 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
   return (
     <div
       onClick={handlePlayClick}
-      className="group relative glass rounded-2xl p-2.5 cursor-pointer transition-all duration-500 hover:bg-white/[0.05] hover:shadow-neon-rock/20 border border-transparent hover:border-white/10 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
+      className={clsx(
+        "group relative glass rounded-xl sm:rounded-2xl p-2 md:p-2.5 cursor-pointer transition-all duration-300 hover:bg-white/[0.05] hover:shadow-neon-rock/20 border border-transparent hover:border-white/10 sm:hover:-translate-y-1 sm:hover:scale-[1.02] active:scale-[0.98]",
+        isList 
+          ? "flex items-center gap-3 w-full" 
+          : "flex sm:flex-col items-center sm:items-stretch gap-3 sm:gap-0"
+      )}
     >
       {/* Badge */}
       {(isTrending || isNew) && (
-        <div className="absolute top-2 left-2 z-10">
+        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10">
           {isTrending ? (
-            <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+            <span className="text-[8px] sm:text-[10px] font-bold text-white px-1.5 sm:px-2 py-0.5 rounded-full"
               style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}>
               🔥 Hot
             </span>
           ) : (
-            <span className="text-[10px] font-bold text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+            <span className="text-[8px] sm:text-[10px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full">
               ✦ New
             </span>
           )}
@@ -42,7 +47,12 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
       )}
 
       {/* Album Art */}
-      <div className="relative aspect-square mb-3 rounded-xl overflow-hidden">
+      <div className={clsx(
+        "relative aspect-square rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0",
+        isList 
+          ? "w-14 h-14" 
+          : "w-14 h-14 sm:w-full sm:h-auto sm:mb-3"
+      )}>
         <img
           src={song?.image || 'https://placehold.co/400x400/1a0a2e/8b5cf6?text=♪'}
           alt={song?.title}
@@ -50,10 +60,10 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
           loading="lazy"
         />
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Play button */}
-        <div className="absolute inset-0 flex items-end justify-end p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-2 group-hover:translate-y-0">
+        <div className="absolute inset-0 flex items-end justify-end p-2.5 opacity-0 sm:group-hover:opacity-100 transition-all duration-200 translate-y-2 group-hover:translate-y-0">
           <button
             onClick={handlePlayClick}
             className="w-11 h-11 gradient-btn rounded-full flex items-center justify-center shadow-neon-rock"
@@ -64,34 +74,35 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
       </div>
 
       {/* Info */}
-      <div className="min-w-0 pr-1">
+      <div className="min-w-0 flex-1 sm:pr-1">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold text-sm text-white truncate flex-1">{song?.title || 'Unknown Track'}</h3>
           <button
             onClick={handleLikeClick}
             className={clsx(
-              'flex-shrink-0 transition-all duration-200',
+              'hidden sm:block flex-shrink-0 transition-all duration-200',
               isLiked ? 'text-neon-pink' : 'text-white/20 hover:text-white/60'
             )}
           >
             <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} strokeWidth={isLiked ? 0 : 2} />
           </button>
         </div>
-        {song?.artistId ? (
-          <Link 
-            to={`/artist/${song.artistId}`}
-            onClick={(e) => e.stopPropagation()}
-            className="text-xs text-white/40 truncate mt-0.5 hover:text-neon-purple hover:underline inline-block transition-colors max-w-full"
-          >
-            {song?.artist || 'Unknown Artist'}
-          </Link>
-        ) : (
-          <p className="text-xs text-white/40 truncate mt-0.5">{song?.artist || 'Unknown Artist'}</p>
-        )}
+        <p className="text-xs text-white/40 truncate mt-0.5">
+          {song?.artist || 'Unknown Artist'}
+        </p>
       </div>
 
-      {/* Actions - Top Right More Menu */}
-      <div className="absolute top-4 right-4 z-20 group-hover:opacity-100 transition-opacity">
+      {/* Actions */}
+      <div className="sm:absolute top-4 right-4 z-20 flex items-center gap-1">
+        <button
+          onClick={handleLikeClick}
+          className={clsx(
+            'sm:hidden p-2 transition-all duration-200',
+            isLiked ? 'text-neon-pink' : 'text-white/20'
+          )}
+        >
+          <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} strokeWidth={isLiked ? 0 : 2} />
+        </button>
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
@@ -116,7 +127,6 @@ export const SongCard = ({ song, onClick, isTrending = false, isNew = false }) =
                   e.stopPropagation();
                   const name = prompt("Enter playlist name:");
                   if (name) {
-                    const { playlists: pld } = usePlayerStore.getState();
                     const nextId = Date.now().toString();
                     usePlayerStore.getState().createPlaylist(name);
                     // Add song to newly created playlist

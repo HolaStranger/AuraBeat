@@ -3,6 +3,7 @@ import { Search as SearchIcon, X, TrendingUp, Clock, Music2, Mic2, Sparkles, Che
 import { Link } from 'react-router-dom';
 import { saavnApi } from '../api/jiosaavn';
 import { SongCard } from '../components/SongCard';
+import { SongRow } from '../components/SongRow';
 import { usePlayerStore } from '../store/playerStore';
 
 const LANGUAGES = ['tamil', 'hindi', 'english', 'telugu', 'kannada', 'all'];
@@ -50,8 +51,8 @@ export const Search = () => {
         // Search songs, albums, and playlists simultaneously
         const [songData, albumData, playlistData] = await Promise.all([
           saavnApi.search(query, searchLang),
-          saavnApi.searchAlbums(query),
-          saavnApi.searchPlaylists(query)
+          saavnApi.searchAlbums(query, searchLang),
+          saavnApi.searchPlaylists(query, searchLang)
         ]);
         
         // De-duplicate songs by title (clean version) to avoid clutter
@@ -105,12 +106,8 @@ export const Search = () => {
 
   return (
     <div className="min-h-full pb-32 md:pb-24">
-      {/* Sticky header */}
-      <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/[0.04] px-5 md:px-8 pt-6 md:pt-10 pb-4 md:pb-5">
-        <h1 className="text-2xl md:text-3xl font-black text-white mb-4 md:mb-5 tracking-tight">
-          <span className="gradient-text">Search</span>
-        </h1>
-
+      {/* Sticky header refined */}
+      <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/[0.04] px-5 md:px-8 pt-4 md:pt-6 pb-4 md:pb-5">
         {/* Search box */}
         <div className="relative max-w-2xl">
           <SearchIcon
@@ -173,10 +170,29 @@ export const Search = () => {
                   <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">Top Songs</p>
                   <p className="text-white/20 text-[10px]">{results.length} found</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
-                  {results.map((song, i) => (
-                    <SongCard key={song.id} song={song} onClick={() => play(results, i)} />
-                  ))}
+                <div className="rounded-2xl overflow-hidden border border-white/[0.03] bg-white/[0.01]">
+                  <div
+                    className="hidden md:grid px-4 py-2 border-b border-white/[0.04] text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ gridTemplateColumns: '28px 1fr auto' }}
+                  >
+                    <span className="text-center">#</span>
+                    <span>Title</span>
+                    <span className="pr-2">Time</span>
+                  </div>
+                  {(() => {
+                    const unique = [];
+                    const seen = new Set();
+                    results.forEach(song => {
+                      const cleanTitle = (song.title || '').toLowerCase().trim();
+                      if (!seen.has(cleanTitle)) {
+                        unique.push(song);
+                        seen.add(cleanTitle);
+                      }
+                    });
+                    return unique.map((song, i) => (
+                      <SongRow key={song.id} song={song} index={i} onPlay={() => play(unique, i)} />
+                    ));
+                  })()}
                 </div>
               </section>
             )}
@@ -188,12 +204,12 @@ export const Search = () => {
                   <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">Albums & Movies</p>
                   <p className="text-white/20 text-[10px]">{albumResults.length} found</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                <div className="flex overflow-x-auto no-scrollbar gap-3 md:gap-4 -mx-5 px-5 md:mx-0 md:px-0 pb-4">
                   {albumResults.map((album) => (
                     <Link 
                       key={album.id} 
                       to={`/album/${album.id}`}
-                      className="glass rounded-2xl p-3 border border-white/5 hover:border-neon-rock/30 transition-all group"
+                      className="flex-shrink-0 w-36 sm:w-44 glass rounded-2xl p-3 border border-white/5 hover:border-neon-rock/30 transition-all group"
                     >
                       <div className="aspect-square rounded-xl overflow-hidden mb-3 relative">
                         <img src={album.image} alt={album.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -221,12 +237,12 @@ export const Search = () => {
                   </div>
                   <p className="text-white/20 text-[10px]">{playlistResults.length} found</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+                <div className="flex overflow-x-auto no-scrollbar gap-3 md:gap-4 -mx-5 px-5 md:mx-0 md:px-0 pb-4">
                   {playlistResults.map((playlist) => (
                     <Link 
                       key={playlist.id} 
                       to={`/view/playlist/${playlist.id}`}
-                      className="glass rounded-2xl p-3 border border-white/5 hover:border-neon-purple/30 transition-all group"
+                      className="flex-shrink-0 w-36 sm:w-44 glass rounded-2xl p-3 border border-white/5 hover:border-neon-purple/30 transition-all group"
                     >
                       <div className="aspect-square rounded-xl overflow-hidden mb-3 relative">
                         <img src={playlist.image} alt={playlist.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-60" />
@@ -247,14 +263,17 @@ export const Search = () => {
               </section>
             )}
           </div>
-        ) : isSearching && results.length === 0 && albumResults.length === 0 && playlistResults.length === 0 ? (
-          <div className="text-center py-20 text-white/25">
-            <p className="text-lg font-semibold text-white/40">Nothing found for "{query}"</p>
-            <p className="text-sm mt-2">Try a different search term or language</p>
-          </div>
         ) : (
-          /* Discovery Panel — shown when not searching */
           <div className="space-y-10">
+            {isSearching && results.length === 0 && albumResults.length === 0 && playlistResults.length === 0 && (
+              <div className="text-center py-10 text-white/25 border-b border-white/5 pb-10">
+                <p className="text-lg font-semibold text-white/40 mb-1 tracking-tight">Nothing found for "{query}"</p>
+                <p className="text-xs">Try a different search term or check your language filter</p>
+              </div>
+            )}
+            
+            {/* Discovery Panel */}
+            <div className="space-y-10 pt-4">
 
             {/* Genre Quick Picks */}
             <section>
@@ -351,10 +370,29 @@ export const Search = () => {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
-                  {suggestions.map((song, i) => (
-                    <SongCard key={song.id} song={song} onClick={() => play(suggestions, i)} />
-                  ))}
+                <div className="rounded-2xl overflow-hidden border border-white/[0.03] bg-white/[0.01]">
+                  <div
+                    className="hidden md:grid px-4 py-2 border-b border-white/[0.04] text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ gridTemplateColumns: '28px 1fr auto' }}
+                  >
+                    <span className="text-center">#</span>
+                    <span>Title</span>
+                    <span className="pr-2">Time</span>
+                  </div>
+                  {(() => {
+                    const unique = [];
+                    const seen = new Set();
+                    suggestions.forEach(song => {
+                      const cleanTitle = (song.title || '').toLowerCase().trim();
+                      if (!seen.has(cleanTitle)) {
+                        unique.push(song);
+                        seen.add(cleanTitle);
+                      }
+                    });
+                    return unique.map((song, i) => (
+                      <SongRow key={song.id} song={song} index={i} onPlay={() => play(unique, i)} />
+                    ));
+                  })()}
                 </div>
               )}
             </section>
@@ -371,8 +409,9 @@ export const Search = () => {
             </section>
 
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
+  </div>
   );
 };

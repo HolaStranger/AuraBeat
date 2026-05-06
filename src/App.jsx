@@ -12,7 +12,9 @@ import { Album } from './pages/Album';
 import { PlaylistDetail } from './pages/PlaylistDetail';
 import { PlaylistView } from './pages/PlaylistView';
 import { History } from './pages/History';
+import { TimeCapsule } from './pages/TimeCapsule';
 import { Settings } from './pages/Settings';
+import { SavedAlbums } from './pages/SavedAlbums';
 import { CassettePlayer } from './components/Player/CassettePlayer';
 import { PlayerDetailPanel } from './components/Player/PlayerDetailPanel';
 import { PlayerProvider } from './context/PlayerContext';
@@ -23,6 +25,21 @@ import { useLocation } from 'react-router-dom';
 function App() {
   const { isPlayerOpen } = usePlayerStore();
   const location = useLocation();
+
+  const getPageTitle = () => {
+  const path = location.pathname;
+  if (path === '/') return 'Discover';
+  if (path.startsWith('/search')) return 'Search';
+  if (path.startsWith('/library')) return 'Library';
+  if (path.startsWith('/history')) return 'History';
+  if (path.startsWith('/capsule')) return 'Time Capsule';
+  if (path.startsWith('/artist')) return 'Artist';
+  if (path.startsWith('/album')) return 'Album';
+  if (path.startsWith('/playlist')) return 'Playlist';
+  if (path.startsWith('/saved-albums')) return 'Saved Albums';
+  if (path.startsWith('/settings')) return 'Settings';
+  return 'AuraBeat';
+  };
   const [leftWidth, setLeftWidth] = useState(240);
   const [rightWidth, setRightWidth] = useState(380);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -68,12 +85,11 @@ function App() {
           {/* Left Sidebar (Desktop & Mobile Overlay) */}
           <aside 
             className={clsx(
-              "h-full fixed xl:relative z-[120] xl:z-40 bg-[#020205] border-r border-white/[0.02] transition-all duration-300 ease-in-out",
-              isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0 xl:absolute"
+              "h-full fixed xl:relative z-[120] xl:z-40 bg-[#020205] border-r border-white/[0.02] transition-all duration-300 ease-in-out overflow-hidden",
+              isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
             )}
             style={{ 
-              width: (isMobile || isTablet) ? 280 : leftWidth,
-              visibility: isSidebarOpen ? 'visible' : 'hidden' 
+              width: (isMobile || isTablet) ? 280 : (isSidebarOpen ? leftWidth : 0),
             }}
           >
             <div 
@@ -99,17 +115,23 @@ function App() {
 
           {/* Center: Scrollable Content */}
           <main className="flex-1 overflow-y-auto relative custom-scrollbar bg-black flex flex-col">
-            {/* Header with Hamburger */}
-            <header className="h-16 flex items-center px-5 md:px-8 border-b border-white/[0.02] bg-black/50 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
-              <button 
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 -ml-2 text-white/50 hover:text-white transition-colors flex items-center justify-center rounded-xl hover:bg-white/5"
-              >
-                {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-              <div className="ml-4 h-6 w-px bg-white/5 hidden sm:block" />
+            {/* Header with Hamburger & Page Title */}
+            <header className="h-14 flex items-center px-4 md:px-6 border-b border-white/[0.02] bg-black/40 backdrop-blur-2xl sticky top-0 z-50 flex-shrink-0">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 -ml-2 text-white/50 hover:text-white transition-colors flex items-center justify-center rounded-xl hover:bg-white/5"
+                >
+                  {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
+                <div className="h-5 w-px bg-white/5" />
+                <h2 className="text-sm font-black uppercase tracking-[0.3em] text-white">
+                  {getPageTitle()}
+                </h2>
+              </div>
+
               <div className="ml-auto flex items-center gap-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 hidden sm:block">AuraBeat Personal V2.0</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/10 hidden sm:block">Personal V2.0</p>
               </div>
             </header>
 
@@ -125,6 +147,8 @@ function App() {
                   <Route path="/playlist/:id" element={<PlaylistDetail />} />
                   <Route path="/view/playlist/:id" element={<PlaylistView />} />
                   <Route path="/history" element={<History />} />
+                  <Route path="/capsule" element={<TimeCapsule />} />
+                  <Route path="/saved-albums" element={<SavedAlbums />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </AnimatePresence>

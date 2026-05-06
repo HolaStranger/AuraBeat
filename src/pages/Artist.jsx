@@ -83,7 +83,7 @@ export const Artist = () => {
         {/* Top Songs */}
         <section>
           <h2 className="text-xl font-bold text-white mb-6">Popular Tracks</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
             {artist.topSongs.slice(0, 5).map((song, i) => (
               <SongCard 
                 key={song.id} 
@@ -102,12 +102,12 @@ export const Artist = () => {
         {artist.topAlbums && artist.topAlbums.length > 0 && (
           <section>
             <h2 className="text-xl font-bold text-white mb-6">Albums</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
+            <div className="flex overflow-x-auto no-scrollbar sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4 -mx-5 px-5 sm:mx-0 sm:px-0 pb-4 sm:pb-0">
               {artist.topAlbums.map((album) => (
                 <div 
                   key={album.id}
                   onClick={() => navigate(`/album/${album.id}`)}
-                  className="group glass rounded-2xl p-3 cursor-pointer hover:bg-white/[0.07] hover:shadow-neon-purple transition-all"
+                  className="flex-shrink-0 w-40 sm:w-auto group glass rounded-2xl p-3 cursor-pointer hover:bg-white/[0.07] hover:shadow-neon-purple transition-all"
                 >
                   <div className="relative aspect-square mb-3 rounded-xl overflow-hidden">
                     <img 

@@ -1,4 +1,59 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://jiosaavn-api-privatecvc2.vercel.app';
+// Relative proxy paths — Vite dev server rewrites these to the real API servers.
+// This bypasses CORS since all requests appear same-origin to the browser.
+const API_ENDPOINTS = [
+  '/jio1',
+  '/jio2',
+  '/jio3',
+  '/jio4',
+];
+
+let currentEndpointIndex = 0;
+
+const fetchWithFallback = async (path) => {
+  let lastError = null;
+  for (let i = 0; i < API_ENDPOINTS.length; i++) {
+    const idx = (currentEndpointIndex + i) % API_ENDPOINTS.length;
+    const url = `${API_ENDPOINTS[idx]}${path}`;
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        currentEndpointIndex = idx;
+        return res;
+      }
+      if (res.status === 402 || res.status === 403 || res.status === 429) {
+        console.warn(`Endpoint ${API_ENDPOINTS[idx]} status ${res.status}, trying next...`);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+      console.warn(`Endpoint ${API_ENDPOINTS[idx]} failed:`, err.message);
+    }
+  }
+  throw lastError || new Error('All API endpoints failed');
+};
+
+// Helper: Extract results from different API versions (v2/v3/v4)
+const getResults = (data) => {
+  if (!data) return [];
+  // v3/v4 format: data.data.results
+  if (data.data?.results) return data.data.results;
+  // v2 format: data.results
+  if (data.results) return data.results;
+  // Direct array (some endpoints)
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data)) return data;
+  return [];
+};
+
+// Helper: Extract single item from different API versions
+const getSingleItem = (data) => {
+  if (!data) return null;
+  if (data.data && !Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.data)) return data.data[0];
+  if (data.results && Array.isArray(data.results)) return data.results[0];
+  return data;
+};
 
 // Helper: decode HTML entities
 const decodeHtml = (str) => {
@@ -10,25 +65,42 @@ const decodeHtml = (str) => {
 const formatSong = (song) => {
   if (!song) return null;
 
-  // This API uses 'link' not 'url' for download URLs
+  // v4 uses 'url', v3 uses 'link'
   const streamUrl =
+    song.downloadUrl?.find(d => d.quality === '320kbps')?.url ||
     song.downloadUrl?.find(d => d.quality === '320kbps')?.link ||
+    song.downloadUrl?.find(d => d.quality === '160kbps')?.url ||
     song.downloadUrl?.find(d => d.quality === '160kbps')?.link ||
-    song.downloadUrl?.[song.downloadUrl.length - 1]?.link;
+    song.downloadUrl?.[song.downloadUrl.length - 1]?.url ||
+    song.downloadUrl?.[song.downloadUrl.length - 1]?.link ||
+    song.media_url || song.url;
 
   const image =
+    song.image?.find(i => i.quality === '500x500')?.url ||
     song.image?.find(i => i.quality === '500x500')?.link ||
-    song.image?.[song.image.length - 1]?.link;
+    song.image?.[song.image.length - 1]?.url ||
+    song.image?.[song.image.length - 1]?.link ||
+    (typeof song.image === 'string' ? song.image : null);
 
   if (!streamUrl) return null;
 
+  // Extract artist name robustly
+  let artistName = '';
+  if (song.artists?.primary) {
+    artistName = song.artists.primary.map(a => a.name).join(', ');
+  } else if (Array.isArray(song.primaryArtists)) {
+    artistName = song.primaryArtists.map(a => typeof a === 'object' ? a.name : a).join(', ');
+  } else {
+    artistName = song.primaryArtists || song.artist || 'Unknown Artist';
+  }
+
   return {
     id: song.id,
-    title: decodeHtml(song.name),
-    artist: decodeHtml(song.primaryArtists),
-    artistId: song.primaryArtistsId || song.artistId, // Handle both formats
-    album: decodeHtml(song.album?.name),
-    albumId: song.album?.id,
+    title: decodeHtml(song.name || song.title),
+    artist: decodeHtml(artistName),
+    artistId: song.artists?.primary?.[0]?.id || song.primaryArtistsId || song.artistId,
+    album: decodeHtml(song.album?.name || song.album || ''),
+    albumId: song.album?.id || song.albumid,
     image,
     url: streamUrl,
     duration: Number(song.duration) || 0,
@@ -41,7 +113,9 @@ const formatPlaylist = (playlist) => {
   if (!playlist) return null;
 
   const image =
+    playlist.image?.find(i => i.quality === '500x500')?.url ||
     playlist.image?.find(i => i.quality === '500x500')?.link ||
+    playlist.image?.[playlist.image.length - 1]?.url ||
     playlist.image?.[playlist.image.length - 1]?.link ||
     (typeof playlist.image === 'string' ? playlist.image : null);
 
@@ -54,7 +128,7 @@ const formatPlaylist = (playlist) => {
   return {
     id,
     name,
-    subtitle: decodeHtml(playlist.subtitle || playlist.more_info?.firstname || ''),
+    subtitle: decodeHtml(playlist.subtitle || playlist.more_info?.firstname || playlist.firstname || ''),
     image,
   };
 };
@@ -68,71 +142,76 @@ const filterByLang = (songs, lang) => {
 export const saavnApi = {
   searchPlaylists: async (query, lang = 'tamil') => {
     try {
-      const searchQuery = lang && lang !== 'all' ? `${query} ${lang}` : query;
-      const res = await fetch(`${API_BASE}/search/playlists?query=${encodeURIComponent(searchQuery)}&limit=20`);
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      const res = await fetchWithFallback(`/search/playlists?query=${encodeURIComponent(`${query} ${lang}`)}&limit=100`);
       const data = await res.json();
-      return (data.data?.results || []).map(formatPlaylist).filter(Boolean);
+      return getResults(data).map(formatPlaylist).filter(Boolean);
     } catch (err) {
       console.error('Search playlists error:', err);
       return [];
     }
   },
 
-  // Search — language param causes 400, so we filter client-side instead
   search: async (query, lang = 'tamil') => {
     try {
-      const searchQuery = lang && lang !== 'all' ? `${query} ${lang}` : query;
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(searchQuery)}&limit=50`);
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      const trimmedQuery = query.trim();
+      const res = await fetchWithFallback(`/search/songs?query=${encodeURIComponent(trimmedQuery)}&limit=100`);
       const data = await res.json();
-      const songs = (data.data?.results || []).map(formatSong).filter(Boolean);
-      // Soft-filter: prefer language match but fall back to all results if too few
+      const songs = getResults(data).map(formatSong).filter(Boolean);
+      
       const filtered = filterByLang(songs, lang);
-      return filtered.length >= 3 ? filtered : songs;
+      
+      return filtered.length > 0 ? filtered : songs;
     } catch (err) {
       console.error('Search error:', err);
       return [];
     }
   },
 
-  searchAlbums: async (query) => {
+  searchAlbums: async (query, lang = 'tamil') => {
     try {
-      const res = await fetch(`${API_BASE}/search/albums?query=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      const trimmedQuery = query.trim();
+      const res = await fetchWithFallback(`/search/albums?query=${encodeURIComponent(trimmedQuery)}&limit=100`);
       const data = await res.json();
-      return (data.data?.results || []).map(album => {
-        const artist = Array.isArray(album.primaryArtists) 
-          ? album.primaryArtists.map(a => a.name).join(', ') 
-          : (album.primaryArtists || album.artist || '');
-          
+      const results = getResults(data);
+      const albums = results.map(album => {
+        let artistName = '';
+        if (album.artists?.primary) {
+          artistName = album.artists.primary.map(a => a.name).join(', ');
+        } else if (Array.isArray(album.primaryArtists)) {
+          artistName = album.primaryArtists.map(a => typeof a === 'object' ? a.name : a).join(', ');
+        } else {
+          artistName = album.primaryArtists || album.artist || 'Unknown Artist';
+        }
+
+        const image =
+          album.image?.find(i => i.quality === '500x500')?.url ||
+          album.image?.find(i => i.quality === '500x500')?.link ||
+          album.image?.[album.image.length - 1]?.url ||
+          album.image?.[album.image.length - 1]?.link ||
+          (typeof album.image === 'string' ? album.image : '');
+
         return {
           id: album.id,
-          title: decodeHtml(album.name),
-          artist: decodeHtml(artist),
-          image: album.image?.[2]?.link || album.image?.[1]?.link || album.image?.[0]?.link,
+          title: decodeHtml(album.name || album.title),
+          artist: decodeHtml(artistName),
+          image,
           type: 'album',
-          year: album.year
+          year: album.year,
+          language: album.language
         };
       });
+
+      const filtered = lang === 'all' ? albums : albums.filter(a => a.language?.toLowerCase() === lang.toLowerCase());
+      return filtered.length > 0 ? filtered : albums;
     } catch (err) {
       console.error('Album search error:', err);
       return [];
     }
   },
 
-  searchPlaylists: async (query) => {
-    try {
-      const res = await fetch(`${API_BASE}/search/playlists?query=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      return (data.data?.results || []).map(formatPlaylist).filter(Boolean);
-    } catch (e) { return []; }
-  },
-
   getTrending: async (lang = 'tamil') => {
     try {
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(`trending ${lang} 2024 2025`)}&limit=50`);
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      const res = await fetchWithFallback(`/search/songs?query=${encodeURIComponent(`trending ${lang} 2024 2025`)}&limit=100`);
       const data = await res.json();
       const songs = (data.data?.results || []).map(formatSong).filter(Boolean);
       const filtered = filterByLang(songs, lang);
@@ -145,8 +224,7 @@ export const saavnApi = {
 
   getNewReleases: async (lang = 'tamil') => {
     try {
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(`new hits ${lang} 2025`)}&limit=50`);
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      const res = await fetchWithFallback(`/search/songs?query=${encodeURIComponent(`new hits ${lang} 2025`)}&limit=100`);
       const data = await res.json();
       const songs = (data.data?.results || []).map(formatSong).filter(Boolean);
       const filtered = filterByLang(songs, lang);
@@ -160,10 +238,8 @@ export const saavnApi = {
   // Fetch fresh stream URL — stream URLs expire in ~30 min
   getSongDetails: async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/songs?id=${encodeURIComponent(id)}`);
-      if (!res.ok) return null;
+      const res = await fetchWithFallback(`/songs?ids=${encodeURIComponent(id)}`);
       const data = await res.json();
-      // API returns { data: [song] } or { data: song }
       const raw = Array.isArray(data.data) ? data.data[0] : data.data;
       return formatSong(raw);
     } catch (err) {
@@ -174,8 +250,7 @@ export const saavnApi = {
 
   getArtistDetails: async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/artists?id=${encodeURIComponent(id)}`);
-      if (!res.ok) return null;
+      const res = await fetchWithFallback(`/artists?id=${encodeURIComponent(id)}&limit=100`);
       const data = await res.json();
       return {
         ...data.data,
@@ -190,12 +265,23 @@ export const saavnApi = {
 
   getAlbumDetails: async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/albums?id=${encodeURIComponent(id)}`);
-      if (!res.ok) return null;
+      const res = await fetchWithFallback(`/albums?id=${encodeURIComponent(id)}&limit=100`);
       const data = await res.json();
+      const album = data.data;
+
+      if (!album) return null;
+
+      const image =
+        album.image?.find(i => i.quality === '500x500')?.url ||
+        album.image?.find(i => i.quality === '500x500')?.link ||
+        album.image?.[album.image.length - 1]?.url ||
+        album.image?.[album.image.length - 1]?.link ||
+        (typeof album.image === 'string' ? album.image : null);
+
       return {
-        ...data.data,
-        songs: (data.data.songs || []).map(formatSong).filter(Boolean)
+        ...album,
+        image,
+        songs: (album.songs || []).map(formatSong).filter(Boolean)
       };
     } catch (err) {
       console.error('Album details error:', err);
@@ -204,23 +290,37 @@ export const saavnApi = {
   },
 
   getPlaylistDetails: async (id) => {
-    try {
-      const res = await fetch(`${API_BASE}/playlists?id=${encodeURIComponent(id)}`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data.data) return null;
-      return {
-        ...data.data,
-        name: decodeHtml(data.data.listname || data.data.name || data.data.title),
-        image: data.data.image?.find(i => i.quality === '500x500')?.link ||
-               data.data.image?.[data.data.image?.length - 1]?.link ||
-               data.data.image,
-        songs: (data.data.songs || []).map(formatSong).filter(Boolean)
-      };
-    } catch (err) {
-      console.error('Playlist details error:', err);
-      return null;
+    const paths = [
+      `/playlists?id=${encodeURIComponent(id)}&limit=100`,
+      `/playlist?id=${encodeURIComponent(id)}&limit=100`,
+    ];
+
+    for (const path of paths) {
+      try {
+        const res = await fetchWithFallback(path);
+        const data = await res.json();
+        const playlist = data.data;
+
+        if (playlist) {
+          const image =
+            playlist.image?.find(i => i.quality === '500x500')?.url ||
+            playlist.image?.find(i => i.quality === '500x500')?.link ||
+            playlist.image?.[playlist.image.length - 1]?.url ||
+            playlist.image?.[playlist.image.length - 1]?.link ||
+            (typeof playlist.image === 'string' ? playlist.image : null);
+
+          return {
+            ...playlist,
+            name: decodeHtml(playlist.listname || playlist.name || playlist.title),
+            image,
+            songs: (playlist.songs || []).map(formatSong).filter(Boolean)
+          };
+        }
+      } catch (err) {
+        continue;
+      }
     }
+    return null;
   },
 
   getAlbums: async (albumIds) => {
@@ -236,13 +336,7 @@ export const saavnApi = {
   // Get search suggestions / trending terms for the search page
   getSuggestions: async (lang = 'tamil') => {
     try {
-      const queries = [
-        `trending hits ${lang} 2025`,
-        `best of ${lang}`,
-        `top ${lang} songs`,
-      ];
-      const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(queries[0])}&limit=10`);
-      if (!res.ok) return [];
+      const res = await fetchWithFallback(`/search/songs?query=${encodeURIComponent(`trending hits ${lang} 2025`)}&limit=10`);
       const data = await res.json();
       return (data.data?.results || []).map(formatSong).filter(Boolean).slice(0, 8);
     } catch (err) {
@@ -251,101 +345,71 @@ export const saavnApi = {
   },
 
   getLyrics: async (id) => {
-    const endpoints = [
-      `${API_BASE}/songs/${id}/lyrics`,
-      `${API_BASE}/songs/lyrics?id=${id}`,
-      `${API_BASE}/lyrics?id=${id}`
+    const paths = [
+      `/songs/${id}/lyrics`,
+      `/songs/lyrics?ids=${id}`,
+      `/lyrics?ids=${id}`
     ];
 
-    for (const url of endpoints) {
+    for (const path of paths) {
       try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data?.lyrics) return data.data.lyrics;
-          if (data.data && typeof data.data === 'string') return data.data;
-        }
+        const res = await fetchWithFallback(path);
+        const data = await res.json();
+        if (data.data?.lyrics) return data.data.lyrics;
+        if (data.data && typeof data.data === 'string') return data.data;
       } catch (e) { continue; }
     }
-    
-    // Fallback: check song details
-    try {
-      const endpoints = [
-        `${API_BASE}/songs?id=${id}`,
-        `${API_BASE}/song?id=${id}`
-      ];
-      for (const url of endpoints) {
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const raw = Array.isArray(data.data) ? data.data[0] : data.data;
-          if (raw?.lyrics) return raw.lyrics;
-        }
-      }
-    } catch (e) { console.warn('Lyrics fallback error:', e); }
-
     return null;
   },
 
   getSimilarSongs: async (id) => {
-    const endpoints = [
-      `${API_BASE}/songs/${id}/suggestions`,
-      `${API_BASE}/songs/${id}/recommendations`,
-      `${API_BASE}/songs/suggestions?id=${id}`,
-      `${API_BASE}/recommendations/songs?id=${id}`
-    ];
-
-    for (const url of endpoints) {
-      try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const results = data.data?.results || data.data || [];
-          if (Array.isArray(results) && results.length > 0) {
-            const songs = results.map(formatSong).filter(Boolean);
-            const unique = [];
-            const seen = new Set();
-            for (const s of songs) {
-              const clean = s.title.toLowerCase().split('(')[0].trim();
-              if (!seen.has(clean)) {
-                unique.push(s);
-                seen.add(clean);
-              }
-            }
-            return unique;
-          }
-        }
-      } catch (e) { console.warn('Endpoint failed:', url); }
-    }
-
-    // Hyper-Fallback: If everything 404s, search for the song title + language
     try {
-      console.log('API Suggestions failed. Engaging Hyper-Fallback...');
       const song = await saavnApi.getSongDetails(id);
-      if (song) {
-        // Search for trending songs in the same language
-        if (song.language) {
-          console.log(`Searching for trending ${song.language} songs...`);
-          const trending = await saavnApi.search(`trending ${song.language} songs`, song.language);
-          
-          // De-duplicate by title to avoid "same song, different album" clutter
-          const uniqueSongs = [];
-          const seenTitles = new Set([song.title.toLowerCase().split('(')[0].trim()]);
-          
-          for (const s of trending) {
-            const cleanTitle = s.title.toLowerCase().split('(')[0].trim();
-            if (!seenTitles.has(cleanTitle)) {
-              uniqueSongs.push(s);
-              seenTitles.add(cleanTitle);
-              if (uniqueSongs.length >= 12) break;
-            }
-          }
-          
-          return uniqueSongs;
+      if (!song) return [];
+
+      const lang = song.language || 'tamil';
+      const artist = song.artist?.split(',')[0].trim();
+
+      // Fetch a wide pool from different sources
+      const [suggestionsRes, artistSongs, topHits] = await Promise.all([
+        // Source 1: Direct API suggestions
+        fetchWithFallback(`/songs/${id}/suggestions`).catch(() => null),
+        // Source 2: More from the same artist
+        artist ? saavnApi.search(artist, lang) : Promise.resolve([]),
+        // Source 3: General top hits in the language
+        saavnApi.search(`top ${lang} hits`, lang)
+      ]);
+
+      const suggestionsData = suggestionsRes ? await suggestionsRes.json() : { data: [] };
+      const suggestions = suggestionsData.data || [];
+
+      const formattedSuggestions = (Array.isArray(suggestions) ? suggestions : []).map(formatSong).filter(Boolean);
+      const songs = [...formattedSuggestions, ...artistSongs, ...topHits];
+
+      // De-duplicate by ID and filter current song
+      const uniquePool = [];
+      const seenIds = new Set([id]);
+      const seenTitles = new Set([song.title.toLowerCase().split('(')[0].trim()]);
+
+      for (const s of songs) {
+        const titleClean = s.title.toLowerCase().split('(')[0].trim();
+        if (!seenIds.has(s.id) && !seenTitles.has(titleClean)) {
+          uniquePool.push(s);
+          seenIds.add(s.id);
+          seenTitles.add(titleClean);
         }
       }
-    } catch (e) { console.error('Hyper-Fallback failed:', e); }
-    
-    return [];
+
+      // Shuffle the entire pool for randomness
+      for (let i = uniquePool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [uniquePool[i], uniquePool[j]] = [uniquePool[j], uniquePool[i]];
+      }
+
+      return uniquePool.slice(0, 15);
+    } catch (e) {
+      console.error('Queue generation failed:', e);
+      return [];
+    }
   },
 };

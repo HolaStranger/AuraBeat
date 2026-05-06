@@ -13,7 +13,8 @@ export const PlayerDetailPanel = () => {
     currentSong, isPlaying, volume, setVolume,
     repeatMode, toggleRepeat, shuffleMode, toggleShuffle,
     playbackSpeed, setPlaybackSpeed, togglePlayerOpen,
-    likedSongs, toggleLike, playlists, addToPlaylist, createPlaylist
+    likedSongs, toggleLike, playlists, addToPlaylist, createPlaylist,
+    queue, currentIndex, setCurrentIndex
   } = usePlayerStore();
 
   const [showMenu, setShowMenu] = useState(false);
@@ -70,9 +71,9 @@ export const PlayerDetailPanel = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">AuraBeat Detail</span>
             <button 
               onClick={togglePlayerOpen}
-              className="p-2 -mr-2 text-white/20 hover:text-white transition-colors"
+              className="p-2.5 -mr-2 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all"
             >
-              <X size={20} />
+              <X size={22} />
             </button>
           </div>
 
@@ -240,32 +241,58 @@ export const PlayerDetailPanel = () => {
                   <div className="space-y-3 animate-pulse">
                     {[...Array(5)].map((_, i) => <div key={i} className="h-12 bg-white/5 rounded-xl w-full" />)}
                   </div>
-                ) : similar.length > 0 ? (
-                  similar.map((s, i) => (
-                    <button
-                      key={s.id}
-                      onClick={() => {
-                        const { queue, currentIndex } = usePlayerStore.getState();
-                        const newQueue = [...queue.slice(0, currentIndex + 1), s, ...queue.slice(currentIndex + 1)];
-                        usePlayerStore.getState().setQueue(newQueue);
-                        setTimeout(() => usePlayerStore.getState().setCurrentIndex(currentIndex + 1), 50);
-                      }}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group text-left"
-                    >
-                      <img src={s.image} className="w-10 h-10 rounded-lg object-cover" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate group-hover:text-neon-rock transition-colors">{s.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-[10px] text-white/30 truncate uppercase tracking-wider">{s.artist}</p>
-                          <span className="w-1 h-1 rounded-full bg-white/10" />
-                          <p className="text-[10px] text-white/20 truncate italic">{s.album}</p>
-                        </div>
-                      </div>
-                      <Plus size={14} className="text-white/20 group-hover:text-white" />
-                    </button>
-                  ))
                 ) : (
-                  <p className="text-center py-20 text-white/20 italic text-sm">No recommendations found</p>
+                  <>
+                    {/* Show Queue First */}
+                    {queue.length > currentIndex + 1 && (
+                      <div className="mb-6">
+                        <p className="px-3 mb-2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">From Queue</p>
+                        {queue.slice(currentIndex + 1, currentIndex + 6).map((s, i) => (
+                          <button
+                            key={`${s.id}-q-${i}`}
+                            onClick={() => setCurrentIndex(currentIndex + 1 + i)}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group text-left"
+                          >
+                            <img src={s.image} className="w-10 h-10 rounded-lg object-cover" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate group-hover:text-neon-rock transition-colors">{s.title}</p>
+                              <p className="text-[10px] text-white/30 truncate uppercase tracking-wider">{s.artist}</p>
+                            </div>
+                            <Play size={12} className="text-white/20 group-hover:text-white" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {similar.length > 0 && (
+                      <div>
+                        <p className="px-3 mb-2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Recommendations</p>
+                        {similar.map((s, i) => (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              const newQueue = [...queue.slice(0, currentIndex + 1), s, ...queue.slice(currentIndex + 1)];
+                              usePlayerStore.setState({ queue: newQueue });
+                              setTimeout(() => setCurrentIndex(currentIndex + 1), 50);
+                            }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group text-left"
+                          >
+                            <img src={s.image} className="w-10 h-10 rounded-lg object-cover" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate group-hover:text-neon-rock transition-colors">{s.title}</p>
+                              <p className="text-[10px] text-white/30 truncate uppercase tracking-wider">{s.artist}</p>
+                            </div>
+                            <Plus size={14} className="text-white/20 group-hover:text-white" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {queue.length <= currentIndex + 1 && similar.length === 0 && (
+                      <p className="text-center py-20 text-white/20 italic text-sm">No songs in queue or recommendations found</p>
+                    )}
+                  </>
                 )}
               </div>
             )}

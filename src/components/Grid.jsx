@@ -27,10 +27,10 @@ export const Grid = ({ title, items, type }) => {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4"
+        className="flex overflow-x-auto no-scrollbar sm:grid sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3 md:gap-4 -mx-5 px-5 sm:mx-0 sm:px-0 pb-4 sm:pb-0"
       >
         {items.map((item) => (
-          <motion.div key={item.id} variants={itemVariants}>
+          <motion.div key={item.id} variants={itemVariants} className="flex-shrink-0 w-32 sm:w-auto">
             <Link
               to={`/${type}/${item.id}`}
               className="group glass rounded-2xl p-3 w-full block cursor-pointer hover:bg-white/[0.07] hover:shadow-neon-purple/20 border border-transparent hover:border-white/10 transition-all duration-300"

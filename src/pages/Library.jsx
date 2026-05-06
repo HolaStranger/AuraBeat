@@ -1,11 +1,12 @@
 import React from 'react';
-import { Heart, Play } from 'lucide-react';
+import { Heart, Play, Disc } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { usePlayerStore } from '../store/playerStore';
 import { SongCard } from '../components/SongCard';
 import { PageTransition } from '../components/PageTransition';
 
 export const Library = () => {
-  const { likedSongs, setQueue } = usePlayerStore();
+  const { likedSongs, savedAlbums, setQueue } = usePlayerStore();
 
   const play = (songs, i) => {
     setQueue(songs);
@@ -16,8 +17,8 @@ export const Library = () => {
   return (
     <PageTransition>
     <div className="min-h-full">
-      {/* Header */}
-      <div className="px-5 md:px-8 pt-10 md:pt-14 pb-8 md:pb-10 relative overflow-hidden">
+      {/* Header section refined */}
+      <div className="px-5 md:px-8 pt-4 pb-8 relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-6 relative text-center md:text-left">
           {/* Cover artwork */}
           <div
@@ -62,6 +63,7 @@ export const Library = () => {
           </div>
         )}
       </div>
+
     </div>
     </PageTransition>
   );

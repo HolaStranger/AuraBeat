@@ -32,6 +32,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Skip caching for ALL cross-origin requests (API calls, CDNs, etc.)
+  // This prevents the SW from intercepting API calls and returning 'Offline' text
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Skip caching for WebSocket and non-GET requests
   if (event.request.method !== 'GET') {
     return;
@@ -62,9 +68,13 @@ self.addEventListener('fetch', (event) => {
         
         return fetchResponse;
       }).catch((err) => {
-        // Return cached response if fetch fails
         console.warn('Fetch failed:', err);
-        return caches.match(event.request) || new Response('Offline', { status: 503 });
+        return caches.match(event.request).then(cached => {
+          return cached || new Response('Offline', { 
+            status: 503,
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
       });
     })
   );

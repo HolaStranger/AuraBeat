@@ -56,7 +56,13 @@ export const usePlayer = () => {
 
   const updateProgress = useCallback(() => {
     if (howlRef.current && howlRef.current.playing()) {
-      setProgress(howlRef.current.seek());
+      const currentPos = howlRef.current.seek();
+      setProgress(currentPos);
+      
+      // Update duration if it's missing (sometimes duration() is 0 right at start)
+      const d = howlRef.current.duration();
+      if (d > 0) setDuration(d);
+      
       rafRef.current = requestAnimationFrame(updateProgress);
     }
   }, []);

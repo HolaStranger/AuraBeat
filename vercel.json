@@ -1,23 +1,23 @@
 {
   "rewrites": [
     {
-      "source": "/jio1/(.*)",
-      "destination": "https://saavn.me/$1"
+      "source": "/jio1/:path*",
+      "destination": "https://saavn.me/:path*"
     },
     {
-      "source": "/jio2/(.*)",
-      "destination": "https://jiosaavn-api-2.vercel.app/$1"
+      "source": "/jio2/:path*",
+      "destination": "https://jiosaavn-api-2.vercel.app/:path*"
     },
     {
-      "source": "/jio3/(.*)",
-      "destination": "https://jiosaavn-api-beta-one.vercel.app/$1"
+      "source": "/jio3/:path*",
+      "destination": "https://jiosaavn-api-beta-one.vercel.app/:path*"
     },
     {
-      "source": "/jio4/(.*)",
-      "destination": "https://jioapi-v3.vercel.app/$1"
+      "source": "/jio4/:path*",
+      "destination": "https://jioapi-v3.vercel.app/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]

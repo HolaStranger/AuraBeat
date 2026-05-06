@@ -12,7 +12,8 @@ const fetchWithFallback = async (path) => {
   let lastError = null;
   for (let i = 0; i < API_ENDPOINTS.length; i++) {
     const idx = (currentEndpointIndex + i) % API_ENDPOINTS.length;
-    const url = `${API_ENDPOINTS[idx]}${path}`;
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    const url = `${API_ENDPOINTS[idx]}/${cleanPath}`;
     try {
       const res = await fetch(url);
       if (res.ok) {
